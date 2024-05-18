@@ -32,9 +32,11 @@ let get_int =
     f a;
     Int32.to_int a.{0}
 
-(* let set_int =
-   let a = bigarray_create Bigarray.int32 1 in
-   fun f i -> a.{0} <- Int32.of_int i; f a *)
+let set_int =
+  let a = bigarray_create Bigarray.int32 1 in
+  fun f i ->
+    a.{0} <- Int32.of_int i;
+    f a
 
 let get_string_ len f =
   let a = bigarray_create Bigarray.char len in
@@ -333,7 +335,7 @@ let gen_buffers n state =
   let new_state = { state with buffers = state.buffers @ Array.to_list res } in
   (Array.to_list res, new_state)
 
-type buffer_target = ArrayBuffer
+type buffer_target = ArrayBuffer | ElementArrayBuffer
 
 let bind_vertex_array vao s =
   if vao = 0 then (
@@ -351,7 +353,10 @@ let bind_buffer typ buffer s =
     match typ with
     | ArrayBuffer ->
         Stubs.Gl.bind_buffer Stubs.Gl.array_buffer buffer;
-        ok { s with binded_vbo = None })
+        ok { s with binded_vbo = None }
+    | ElementArrayBuffer ->
+        Stubs.Gl.bind_buffer Stubs.Gl.element_array_buffer buffer;
+        ok s)
   else
     match List.find_opt (( = ) buffer) s.buffers with
     | None -> error (Gl (UnknownBuffer buffer))
@@ -359,41 +364,49 @@ let bind_buffer typ buffer s =
         (match typ with
         | ArrayBuffer ->
             Stubs.Gl.bind_buffer Stubs.Gl.array_buffer buffer;
-            ok { s with binded_vbo = Some buffer })
+            ok { s with binded_vbo = Some buffer }
+        | ElementArrayBuffer ->
+            Stubs.Gl.bind_buffer Stubs.Gl.element_array_buffer buffer;
+            ok s)
 
-type purpose =
-  | StaticDraw
-  | DynamicDraw
+type purpose = StaticDraw | DynamicDraw
 
 let purpose_to_gl = function
   | StaticDraw -> Stubs.Gl.static_draw
   | DynamicDraw -> Stubs.Gl.dynamic_draw
 
 type _ data_type =
-  | Int: int data_type
-  | Float: float data_type
-  | None: int -> unit data_type
+  | UInt16: int data_type
+  | Int : int data_type
+  | Float : float data_type
+  | None : int -> unit data_type
 
-let buffer_data: type a. buffer_target -> a data_type -> a list -> purpose -> t -> unit Core.Error.t =
-  fun buffer_typ data_typ data purpose s ->
+let buffer_data :
+    type a.
+    buffer_target -> a data_type -> a list -> purpose -> t -> unit Core.Error.t
+    =
+ fun buffer_typ data_typ data purpose s ->
   let ptr, size =
     match data_typ with
     | Float ->
         let ba =
           Bigarray.Array1.of_array Bigarray.float32 Bigarray.c_layout
-          (Array.of_list data)
+            (Array.of_list data)
         in
-        to_voidp @@ bigarray_start array1 ba,
-        Bigarray.Array1.size_in_bytes ba
+        (to_voidp @@ bigarray_start array1 ba, Bigarray.Array1.size_in_bytes ba)
     | Int ->
         let ba =
           Bigarray.Array1.of_array Bigarray.int32 Bigarray.c_layout
-          (Array.of_list @@ List.map Int32.of_int data)
+            (Array.of_list @@ List.map Int32.of_int data)
         in
-        to_voidp @@ bigarray_start array1 ba,
-        Bigarray.Array1.size_in_bytes ba
-    | None size ->
-        null, size
+        (to_voidp @@ bigarray_start array1 ba, Bigarray.Array1.size_in_bytes ba)
+    | UInt16 ->
+        let ba =
+          Bigarray.Array1.of_array Bigarray.int16_unsigned Bigarray.c_layout
+            (Array.of_list data)
+        in
+        (to_voidp @@ bigarray_start array1 ba, Bigarray.Array1.size_in_bytes ba)
+    | None size -> (null, size)
   in
   match buffer_typ with
   | ArrayBuffer ->
@@ -401,12 +414,48 @@ let buffer_data: type a. buffer_target -> a data_type -> a list -> purpose -> t 
       | None -> error (Gl UnboundedBuffer)
       | Some _ ->
           ok
-          @@ Stubs.Gl.buffer_data Stubs.Gl.array_buffer
-               size
-               ptr
+          @@ Stubs.Gl.buffer_data Stubs.Gl.array_buffer size ptr
                (purpose_to_gl purpose))
+  | ElementArrayBuffer ->
+      ok
+      @@ Stubs.Gl.buffer_data Stubs.Gl.element_array_buffer size ptr
+          (purpose_to_gl purpose)
 
-(* TODO: Some smart things to avoid errors *)
+let buffer_sub_data :
+    type a. buffer_target -> a data_type -> a list -> t -> unit Core.Error.t =
+ fun buffer_type data_typ data s ->
+  let ptr, size =
+    match data_typ with
+    | Float ->
+        let ba =
+          Bigarray.Array1.of_array Bigarray.float32 Bigarray.c_layout
+            (Array.of_list data)
+        in
+        (to_voidp @@ bigarray_start array1 ba, Bigarray.Array1.size_in_bytes ba)
+    | Int ->
+        let ba =
+          Bigarray.Array1.of_array Bigarray.int32 Bigarray.c_layout
+            (Array.of_list @@ List.map Int32.of_int data)
+        in
+        (to_voidp @@ bigarray_start array1 ba, Bigarray.Array1.size_in_bytes ba)
+    | UInt16 ->
+        let ba =
+          Bigarray.Array1.of_array Bigarray.int16_unsigned Bigarray.c_layout
+            (Array.of_list data)
+        in
+        (to_voidp @@ bigarray_start array1 ba, Bigarray.Array1.size_in_bytes ba)
+    | None size -> (null, size)
+  in
+  match buffer_type with
+  | ArrayBuffer ->
+      (match s.binded_vbo with
+      | None -> error (Gl UnboundedBuffer)
+      | Some _ ->
+          ok @@ Stubs.Gl.buffer_sub_data Stubs.Gl.array_buffer 0 size ptr)
+  | ElementArrayBuffer ->
+          ok @@ Stubs.Gl.buffer_sub_data Stubs.Gl.element_array_buffer 0 size ptr
+
+(*TODO: Some smart things to avoid errors *)
 let vertex_attrib_pointer idx size typ normalized stride offset =
   check_error @@ fun () ->
   match typ with
@@ -440,6 +489,21 @@ let draw_arrays kind first count s =
   | Some _ ->
       (match kind with
       | Triangles -> ok @@ Stubs.Gl.draw_arrays Stubs.Gl.triangles first count)
+
+let draw_elements kind count s =
+  match s.binded_vao with
+  | None -> error (Gl UnboundedVertexArray)
+  | Some _ ->
+      (match kind with
+      | Triangles ->
+          ok
+          @@ Stubs.Gl.draw_elements Stubs.Gl.triangles count
+               Stubs.Gl.unsigned_short None)
+
+let delete_buffer id s =
+  let vbo = List.filter (( <> ) id) s.buffers in
+  set_int (Stubs.Gl.delete_buffers 1) id;
+  ok { s with buffers = vbo }
 
 let finalise s =
   bind_buffer ArrayBuffer 0 s >>= bind_vertex_array 0

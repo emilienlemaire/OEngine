@@ -199,7 +199,10 @@ module Constants (T : Ctypes.TYPE) = struct
     let cw = constant "GL_CW" int
     let ccw = constant "GL_CCW" int
 
-    (* 656 *)
+    (* 653 *)
+    let unsigned_short = constant "GL_UNSIGNED_SHORT" int
+    let int_ = constant "GL_INT" int
+    let unsigned_int = constant "GL_UNSIGNED_INT" int
     let float = constant "GL_FLOAT" int
 
     (* 711*)
@@ -212,6 +215,7 @@ module Constants (T : Ctypes.TYPE) = struct
 
     (* 1662 *)
     let array_buffer = constant "GL_ARRAY_BUFFER" int
+    let element_array_buffer = constant "GL_ELEMENT_ARRAY_BUFFER" int
 
     (* 1685 *)
     let static_draw = constant "GL_STATIC_DRAW" int
@@ -650,6 +654,11 @@ module Bindings (F : Ctypes.FOREIGN) = struct
     (* 927 *)
     let draw_arrays =
       foreign "glDrawArrays" (int_as_uint @-> int @-> int @-> returning void)
+
+    (* 929 *)
+    let draw_elements =
+      foreign "glDrawElements"
+        (int_as_uint @-> int @-> int_as_uint @-> ptr_opt void @-> returning void)
 
     (* 964 *)
     let get_error = foreign "glGetError" (void @-> returning int_as_uint)

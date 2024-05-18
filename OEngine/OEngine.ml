@@ -3,7 +3,12 @@ open Result
 open OEngine_lib
 
 module Layer = OEngine_lib.Layer.Make (struct
-  type t = { gl : Gl.t; shader : Shader.t; buffer: Buffer.t [@warning "-69"] }
+  type t = {
+    gl : Gl.t;
+    shader : Shader.t;
+    vertex_buffer : Buffer.Vertex.t option; [@warning "-69"]
+    index_buffer : Buffer.Index.t option; [@warning "-69"]
+  }
 
   let vertex_shader_source =
     "#version 460\n\
@@ -25,8 +30,7 @@ module Layer = OEngine_lib.Layer.Make (struct
   let create () =
     let gl = Gl.make () in
     let shader = Shader.create gl in
-    let buffer = Buffer.create gl in
-    { gl; shader; buffer }
+    { gl; shader; vertex_buffer = None; index_buffer = None }
 
   let attach s =
     let* shader =
@@ -39,19 +43,26 @@ module Layer = OEngine_lib.Layer.Make (struct
       (fun (vaos, gl) -> (List.hd vaos, gl)) @@ Gl.gen_vertex_arrays 1 s.gl
     in
     let* gl = Gl.bind_vertex_array vao gl in
-    let* buffer = Buffer.create gl |> Buffer.create_vertex_buffer vertices in
+    let* vertex_buffer = Buffer.Vertex.create gl vertices in
     let* _ = Gl.vertex_attrib_pointer 0 3 Float false 0 0 in
     let* _ = Gl.enable_vertex_attrib_array 0 gl in
-    let* buffer = Buffer.unbind_vertex_buffer buffer in
-    let gl = buffer.gl in
-    let* gl = Gl.bind_buffer ArrayBuffer 0 gl >>= Gl.bind_vertex_array 0 in
-    ok { gl; shader; buffer }
+    let* index_buffer = Buffer.Index.create gl [ 0; 1; 2 ] in
+    let* vertex_buffer = Buffer.Vertex.unbind vertex_buffer in
+    let gl = vertex_buffer.gl in
+    let* gl = Gl.bind_vertex_array 0 gl in
+    ok
+      {
+        gl;
+        shader;
+        vertex_buffer = Some vertex_buffer;
+        index_buffer = Some index_buffer;
+      }
 
   let update s =
     let* _ = Shader.bind s.shader in
     let vao = List.hd @@ Gl.get_vaos s.gl in
     let* gl = Gl.bind_vertex_array vao s.gl in
-    let* _ = Gl.draw_arrays Triangles 0 3 gl in
+    let* _ = Gl.draw_elements Triangles 3 gl in
     ok { s with gl }
 
   let detach s =
