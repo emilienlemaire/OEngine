@@ -1,0 +1,3 @@
+(library
+  (name glfw_stubs)
+  (libraries glfw_bindings glfw_generated))

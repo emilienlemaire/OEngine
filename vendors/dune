@@ -1,0 +1,12 @@
+(include_subdirs unqualified)
+
+(foreign_library
+  (archive_name glad)
+  (language c)
+  (names gl)
+  (include_dirs glad/include))
+
+(library
+  (name glad_c)
+  (foreign_archives glad))
+

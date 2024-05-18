@@ -1,0 +1,19 @@
+(executable
+  (name generator)
+  (modules generator)
+  (libraries bindings ctypes.stubs ctypes))
+
+(rule
+  (targets stubs.c generated.ml)
+  (deps generator.exe)
+  (action
+    (run %{deps})))
+
+(library
+  (name generated)
+  (modules generated)
+  (foreign_stubs
+    (language c)
+    (names stubs)
+    (include_dirs glad/include))
+  (libraries ctypes.stubs))

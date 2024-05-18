@@ -1,0 +1,19 @@
+(executable
+  (name glfw_stubs_generator)
+  (modules glfw_stubs_generator)
+  (libraries glfw_bindings ctypes.stubs ctypes))
+
+(rule
+  (targets glfw_stubs.c glfw_generated.ml)
+  (deps glfw_stubs_generator.exe)
+  (action
+    (run %{deps})))
+
+(library
+ (name glfw_generated)
+ (modules glfw_generated)
+ (c_library_flags -lglfw)
+ (foreign_stubs
+   (language c)
+   (names glfw_stubs))
+ (libraries ctypes.stubs))

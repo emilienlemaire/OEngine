@@ -1,0 +1,3 @@
+(library
+  (name stubs)
+  (libraries bindings generated))

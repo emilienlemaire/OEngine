@@ -1,0 +1,20 @@
+(executable
+  (name glad_stubs_generator)
+  (modules glad_stubs_generator)
+  (libraries glad_bindings ctypes.stubs ctypes))
+
+(rule
+  (targets glad_stubs.c glad_generated.ml)
+  (deps glad_stubs_generator.exe)
+  (action
+    (run %{deps})))
+
+(library
+ (name glad_generated)
+ (modules glad_generated)
+ (foreign_stubs
+   (language c)
+   (names glad_stubs)
+   (include_dirs ../../vendors/glad/include))
+ (libraries ctypes.stubs))
+

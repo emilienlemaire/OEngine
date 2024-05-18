@@ -1,0 +1,5 @@
+(library
+  (name glfw_bindings)
+  (modules glfw_bindings)
+  (libraries ctypes ctypes-foreign))
+

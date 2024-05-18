@@ -1,0 +1,3 @@
+(library
+  (name glad_bindings)
+  (libraries ctypes ctypes-foreign glad_c))
