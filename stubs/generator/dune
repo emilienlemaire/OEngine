@@ -1,19 +1,45 @@
 (executable
-  (name generator)
-  (modules generator)
-  (libraries bindings ctypes.stubs ctypes))
+ (name generator)
+ (modules generator)
+ (libraries bindings ctypes.stubs ctypes))
 
 (rule
-  (targets stubs.c generated.ml)
-  (deps generator.exe)
-  (action
-    (run %{deps})))
+ (targets stubs.c generated.ml constants_generator.c)
+ (deps generator.exe)
+ (action
+  (run %{deps})))
+
+(rule
+ (targets constants_generator.exe)
+ (deps constants_generator.c)
+ (action
+  (run
+   %{cc}
+   -o
+   %{targets}
+   %{deps}
+   -I%{ocaml_where}/../ctypes
+   -I%{ocaml_where})))
+
+(rule
+ (targets constants.ml)
+ (deps constants_generator.exe)
+ (action
+  (with-stdout-to
+   %{targets}
+   (run %{deps}))))
 
 (library
-  (name generated)
-  (modules generated)
-  (foreign_stubs
-    (language c)
-    (names stubs)
-    (include_dirs glad/include))
-  (libraries ctypes.stubs))
+ (name generated)
+ (modules generated)
+ (foreign_stubs
+  (language c)
+  (names stubs)
+  (flags :standard -Wno-incompatible-pointer-types))
+ (libraries ctypes.stubs)
+ (c_library_flags -lGLEW -lGL -lglfw))
+
+(library
+ (name constants)
+ (modules constants)
+ (libraries ctypes.stubs))

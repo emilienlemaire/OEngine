@@ -1,0 +1,3 @@
+(library
+ (name gl)
+ (libraries core ctypes stubs))

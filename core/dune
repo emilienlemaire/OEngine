@@ -1,0 +1,4 @@
+(library
+ (name core)
+ (preprocess
+  (pps ppx_deriving.show)))

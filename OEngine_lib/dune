@@ -1,2 +1,3 @@
 (library
- (name OEngine_lib))
+ (name OEngine_lib)
+ (libraries glfw gl glew core react))

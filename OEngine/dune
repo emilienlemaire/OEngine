@@ -1,4 +1,4 @@
 (executable
  (public_name OEngine)
  (name OEngine)
- (libraries glad_stubs glfw_stubs))
+ (libraries OEngine_lib))

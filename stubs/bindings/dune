@@ -1,4 +1,3 @@
 (library
-  (name bindings)
-  (libraries ctypes ctypes-foreign))
-
+ (name bindings)
+ (libraries ctypes ctypes-foreign))

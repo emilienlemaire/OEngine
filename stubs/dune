@@ -1,3 +1,4 @@
 (library
-  (name stubs)
-  (libraries bindings generated))
+ (name stubs)
+ (private_modules private)
+ (libraries bindings generated constants))

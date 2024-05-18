@@ -1,0 +1,5 @@
+profile = default
+version = 0.26.2
+
+if-then-else = vertical
+leading-nested-match-parens
