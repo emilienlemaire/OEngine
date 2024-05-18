@@ -216,6 +216,9 @@ module Constants (T : Ctypes.TYPE) = struct
     (* 1685 *)
     let static_draw = constant "GL_STATIC_DRAW" int
 
+    (* 1688 *)
+    let dynamic_draw = constant "GL_DYNAMIC_DRAW" int
+
     (* 1782 *)
     let fragment_shader = constant "GL_FRAGMENT_SHADER" int
     let vertex_shader = constant "GL_VERTEX_SHADER" int

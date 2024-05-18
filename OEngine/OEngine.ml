@@ -3,7 +3,7 @@ open Result
 open OEngine_lib
 
 module Layer = OEngine_lib.Layer.Make (struct
-  type t = { gl : Gl.t; shader : Shader.t }
+  type t = { gl : Gl.t; shader : Shader.t; buffer: Buffer.t [@warning "-69"] }
 
   let vertex_shader_source =
     "#version 460\n\
@@ -25,7 +25,8 @@ module Layer = OEngine_lib.Layer.Make (struct
   let create () =
     let gl = Gl.make () in
     let shader = Shader.create gl in
-    { gl; shader }
+    let buffer = Buffer.create gl in
+    { gl; shader; buffer }
 
   let attach s =
     let* shader =
@@ -37,15 +38,14 @@ module Layer = OEngine_lib.Layer.Make (struct
     let vao, gl =
       (fun (vaos, gl) -> (List.hd vaos, gl)) @@ Gl.gen_vertex_arrays 1 s.gl
     in
-    let vbo, gl =
-      (fun (buffers, gl) -> (List.hd buffers, gl)) @@ Gl.gen_buffers 1 gl
-    in
-    let* gl = Gl.bind_vertex_array vao gl >>= Gl.bind_buffer ArrayBuffer vbo in
-    let* _ = Gl.buffer_data ArrayBuffer vertices StaticDraw gl in
+    let* gl = Gl.bind_vertex_array vao gl in
+    let* buffer = Buffer.create gl |> Buffer.create_vertex_buffer vertices in
     let* _ = Gl.vertex_attrib_pointer 0 3 Float false 0 0 in
     let* _ = Gl.enable_vertex_attrib_array 0 gl in
+    let* buffer = Buffer.unbind_vertex_buffer buffer in
+    let gl = buffer.gl in
     let* gl = Gl.bind_buffer ArrayBuffer 0 gl >>= Gl.bind_vertex_array 0 in
-    ok { gl; shader }
+    ok { gl; shader; buffer }
 
   let update s =
     let* _ = Shader.bind s.shader in

@@ -361,27 +361,50 @@ let bind_buffer typ buffer s =
             Stubs.Gl.bind_buffer Stubs.Gl.array_buffer buffer;
             ok { s with binded_vbo = Some buffer })
 
-type purpose = StaticDraw
+type purpose =
+  | StaticDraw
+  | DynamicDraw
 
-let purpose_to_gl = function StaticDraw -> Stubs.Gl.static_draw
+let purpose_to_gl = function
+  | StaticDraw -> Stubs.Gl.static_draw
+  | DynamicDraw -> Stubs.Gl.dynamic_draw
 
-let buffer_data typ data purpose s =
-  let ba =
-    Bigarray.Array1.of_array Bigarray.float32 Bigarray.c_layout
-      (Array.of_list data)
+type _ data_type =
+  | Int: int data_type
+  | Float: float data_type
+  | None: int -> unit data_type
+
+let buffer_data: type a. buffer_target -> a data_type -> a list -> purpose -> t -> unit Core.Error.t =
+  fun buffer_typ data_typ data purpose s ->
+  let ptr, size =
+    match data_typ with
+    | Float ->
+        let ba =
+          Bigarray.Array1.of_array Bigarray.float32 Bigarray.c_layout
+          (Array.of_list data)
+        in
+        to_voidp @@ bigarray_start array1 ba,
+        Bigarray.Array1.size_in_bytes ba
+    | Int ->
+        let ba =
+          Bigarray.Array1.of_array Bigarray.int32 Bigarray.c_layout
+          (Array.of_list @@ List.map Int32.of_int data)
+        in
+        to_voidp @@ bigarray_start array1 ba,
+        Bigarray.Array1.size_in_bytes ba
+    | None size ->
+        null, size
   in
-  match typ with
+  match buffer_typ with
   | ArrayBuffer ->
       (match s.binded_vbo with
       | None -> error (Gl UnboundedBuffer)
       | Some _ ->
           ok
           @@ Stubs.Gl.buffer_data Stubs.Gl.array_buffer
-               (Bigarray.Array1.size_in_bytes ba)
-               (to_voidp @@ bigarray_start array1 ba)
+               size
+               ptr
                (purpose_to_gl purpose))
-
-type data_type = Float
 
 (* TODO: Some smart things to avoid errors *)
 let vertex_attrib_pointer idx size typ normalized stride offset =
