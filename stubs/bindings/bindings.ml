@@ -230,6 +230,9 @@ module Constants (T : Ctypes.TYPE) = struct
     (* 1789 *)
     let shader_type = constant "GL_SHADER_TYPE" int
 
+    (* 1796 *)
+    let bool_ = constant "GL_BOOL" int
+
     (* 1809 *)
     let delete_status = constant "GL_DELETE_STATUS" int
     let compile_status = constant "GL_COMPILE_STATUS" int
@@ -748,6 +751,10 @@ module Bindings (F : Ctypes.FOREIGN) = struct
 
     (* 1978 *)
     let use_program = foreign "glUseProgram" (int_as_uint @-> returning void)
+
+    (* 4548 *)
+    let create_vertex_arrays =
+      foreign "glCreateVertexArrays" (int @-> ba_as_uint32p @-> returning void)
 
     (* 2016 *)
     let vertex_attrib_pointer =

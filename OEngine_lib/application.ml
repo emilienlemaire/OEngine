@@ -72,22 +72,32 @@ let finalise app =
   Glfw.finalise app.glfw
 
 let push_layer (module NewLayer : Layer.APPLICATION_LAYER) s =
-  let+ glfw = Glfw.push_layer_event_cb NewLayer.event NewLayer.id s.glfw in
-  {
-    glfw;
-    layers = Dequeue.append (module NewLayer : Layer.APPLICATION_LAYER) s.layers;
-  }
+  let* glfw = Glfw.push_layer_event_cb NewLayer.event NewLayer.id s.glfw in
+  let s =
+    {
+      glfw;
+      layers =
+        Dequeue.append (module NewLayer : Layer.APPLICATION_LAYER) s.layers;
+    }
+  in
+  let+ _ = NewLayer.attach () in
+  s
 
 let push_overlay (module NewLayer : Layer.APPLICATION_LAYER) s =
-  let+ glfw = Glfw.push_overlay_event_cb NewLayer.event NewLayer.id s.glfw in
-  {
-    glfw;
-    layers =
-      Dequeue.prepend (module NewLayer : Layer.APPLICATION_LAYER) s.layers;
-  }
+  let* glfw = Glfw.push_overlay_event_cb NewLayer.event NewLayer.id s.glfw in
+  let s =
+    {
+      glfw;
+      layers =
+        Dequeue.prepend (module NewLayer : Layer.APPLICATION_LAYER) s.layers;
+    }
+  in
+  let+ _ = NewLayer.attach () in
+  s
 
 let remove_layer (module Removed : Layer.APPLICATION_LAYER) s =
-  let+ glfw = Glfw.remove_event_cb Removed.id s.glfw in
+  let* glfw = Glfw.remove_event_cb Removed.id s.glfw in
+  let+ () = Removed.detach () in
   {
     glfw;
     layers = Dequeue.remove (module Removed : Layer.APPLICATION_LAYER) s.layers;

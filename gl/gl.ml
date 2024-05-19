@@ -3,13 +3,7 @@ open Result
 open Core.Error
 open Core.Syntax.Result
 
-type t = {
-  binded_vao : int option;
-  binded_vbo : int option;
-  vaos : int list;
-  buffers : int list;
-  pid : int option;
-}
+type t
 
 let bigarray_create k len = Bigarray.(Array1.create k c_layout len)
 
@@ -60,9 +54,6 @@ type _ shader_parameter =
   | SPIRVBinary : bool shader_parameter
 
 type string_ = Vendor | Renderer | Version | ShadingLanguageVersion
-
-let make () =
-  { binded_vao = None; vaos = []; binded_vbo = None; buffers = []; pid = None }
 
 let check_error f =
   let res = f () in
@@ -188,9 +179,7 @@ type _ program_parameter =
   | ProgramSeparable : bool program_parameter
   | ProgramBinaryRetrievableHint : bool program_parameter
 
-let create_program s =
-  let pid = Stubs.Gl.create_program () in
-  (pid, { s with pid = Some pid })
+let create_program () = Stubs.Gl.create_program ()
 
 let attach_shader pid shader =
   check_error (fun () -> Stubs.Gl.attach_shader pid shader)
@@ -315,59 +304,44 @@ let detach_shader pid sid =
 
 let delete_shader sid = check_error (fun () -> Stubs.Gl.delete_shader sid)
 
-let gen_vertex_arrays n state =
+let gen_vertex_arrays n =
   let a = bigarray_create Bigarray.int32 n in
   Stubs.Gl.gen_vertex_arrays n a;
   let res = Array.make n 0 in
   for i = 0 to n - 1 do
     res.(i) <- Int32.to_int a.{i}
   done;
-  let new_state = { state with vaos = state.vaos @ Array.to_list res } in
-  (Array.to_list res, new_state)
+  Array.to_list res
 
-let gen_buffers n state =
+let create_vertex_arrays n =
+  let a = bigarray_create Bigarray.int32 n in
+  Stubs.Gl.create_vertex_arrays n a;
+  let res = Array.make n 0 in
+  for i = 0 to n - 1 do
+    res.(i) <- Int32.to_int a.{i}
+  done;
+  Array.to_list res
+
+let gen_buffers n =
   let a = bigarray_create Bigarray.int32 n in
   Stubs.Gl.gen_buffers n a;
   let res = Array.make n 0 in
   for i = 0 to n - 1 do
     res.(i) <- Int32.to_int a.{i}
   done;
-  let new_state = { state with buffers = state.buffers @ Array.to_list res } in
-  (Array.to_list res, new_state)
+  Array.to_list res
 
 type buffer_target = ArrayBuffer | ElementArrayBuffer
 
-let bind_vertex_array vao s =
-  if vao = 0 then (
-    Stubs.Gl.bind_vertex_array vao;
-    ok { s with binded_vao = None })
-  else
-    match List.find_opt (( = ) vao) s.vaos with
-    | None -> error (Gl (UnknownVertexArray vao))
-    | Some vao ->
-        Stubs.Gl.bind_vertex_array vao;
-        ok { s with binded_vao = Some vao }
+let bind_vertex_array vao =
+  check_error @@ fun () -> Stubs.Gl.bind_vertex_array vao
 
-let bind_buffer typ buffer s =
-  if buffer = 0 then (
-    match typ with
-    | ArrayBuffer ->
-        Stubs.Gl.bind_buffer Stubs.Gl.array_buffer buffer;
-        ok { s with binded_vbo = None }
-    | ElementArrayBuffer ->
-        Stubs.Gl.bind_buffer Stubs.Gl.element_array_buffer buffer;
-        ok s)
-  else
-    match List.find_opt (( = ) buffer) s.buffers with
-    | None -> error (Gl (UnknownBuffer buffer))
-    | Some buffer ->
-        (match typ with
-        | ArrayBuffer ->
-            Stubs.Gl.bind_buffer Stubs.Gl.array_buffer buffer;
-            ok { s with binded_vbo = Some buffer }
-        | ElementArrayBuffer ->
-            Stubs.Gl.bind_buffer Stubs.Gl.element_array_buffer buffer;
-            ok s)
+let bind_buffer typ buffer =
+  check_error @@ fun () ->
+  match typ with
+  | ArrayBuffer -> Stubs.Gl.bind_buffer Stubs.Gl.array_buffer buffer
+  | ElementArrayBuffer ->
+      Stubs.Gl.bind_buffer Stubs.Gl.element_array_buffer buffer
 
 type purpose = StaticDraw | DynamicDraw
 
@@ -375,17 +349,25 @@ let purpose_to_gl = function
   | StaticDraw -> Stubs.Gl.static_draw
   | DynamicDraw -> Stubs.Gl.dynamic_draw
 
-type _ data_type =
-  | UInt16: int data_type
-  | Int : int data_type
-  | Float : float data_type
-  | None : int -> unit data_type
+type empty = [ `Empty ]
+type non_empty = [ `NonEmpty ]
+type empty_or_not = [ empty | non_empty ]
+
+type (_, _) data_type =
+  | UInt16 : (int, [> non_empty ]) data_type
+  | Int : (int, [> non_empty ]) data_type
+  | Float : (float, [> non_empty ]) data_type
+  | Bool : (bool, [> non_empty ]) data_type
+  | None : int -> (_, [> empty ]) data_type
 
 let buffer_data :
     type a.
-    buffer_target -> a data_type -> a list -> purpose -> t -> unit Core.Error.t
-    =
- fun buffer_typ data_typ data purpose s ->
+    buffer_target ->
+    (a, empty_or_not) data_type ->
+    a list ->
+    purpose ->
+    unit Core.Error.t =
+ fun buffer_typ data_typ data purpose ->
   let ptr, size =
     match data_typ with
     | Float ->
@@ -406,24 +388,30 @@ let buffer_data :
             (Array.of_list data)
         in
         (to_voidp @@ bigarray_start array1 ba, Bigarray.Array1.size_in_bytes ba)
+    | Bool ->
+        let ba =
+          Bigarray.Array1.of_array Bigarray.int Bigarray.c_layout
+            (Array.of_list @@ List.map Bool.to_int data)
+        in
+        (to_voidp @@ bigarray_start array1 ba, Bigarray.Array1.size_in_bytes ba)
     | None size -> (null, size)
   in
+  check_error @@ fun () ->
   match buffer_typ with
   | ArrayBuffer ->
-      (match s.binded_vbo with
-      | None -> error (Gl UnboundedBuffer)
-      | Some _ ->
-          ok
-          @@ Stubs.Gl.buffer_data Stubs.Gl.array_buffer size ptr
-               (purpose_to_gl purpose))
+      Stubs.Gl.buffer_data Stubs.Gl.array_buffer size ptr
+        (purpose_to_gl purpose)
   | ElementArrayBuffer ->
-      ok
-      @@ Stubs.Gl.buffer_data Stubs.Gl.element_array_buffer size ptr
-          (purpose_to_gl purpose)
+      Stubs.Gl.buffer_data Stubs.Gl.element_array_buffer size ptr
+        (purpose_to_gl purpose)
 
 let buffer_sub_data :
-    type a. buffer_target -> a data_type -> a list -> t -> unit Core.Error.t =
- fun buffer_type data_typ data s ->
+    type a.
+    buffer_target ->
+    (a, non_empty) data_type ->
+    a list ->
+    unit Core.Error.t =
+ fun buffer_type data_typ data ->
   let ptr, size =
     match data_typ with
     | Float ->
@@ -444,19 +432,30 @@ let buffer_sub_data :
             (Array.of_list data)
         in
         (to_voidp @@ bigarray_start array1 ba, Bigarray.Array1.size_in_bytes ba)
-    | None size -> (null, size)
+    | Bool ->
+        let ba =
+          Bigarray.Array1.of_array Bigarray.int8_signed Bigarray.c_layout
+            (Array.of_list @@ List.map Bool.to_int data)
+        in
+        (to_voidp @@ bigarray_start array1 ba, Bigarray.Array1.size_in_bytes ba)
   in
-  match buffer_type with
+  check_error @@ fun () -> match buffer_type with
   | ArrayBuffer ->
-      (match s.binded_vbo with
-      | None -> error (Gl UnboundedBuffer)
-      | Some _ ->
-          ok @@ Stubs.Gl.buffer_sub_data Stubs.Gl.array_buffer 0 size ptr)
+      Stubs.Gl.buffer_sub_data Stubs.Gl.array_buffer 0 size ptr
   | ElementArrayBuffer ->
-          ok @@ Stubs.Gl.buffer_sub_data Stubs.Gl.element_array_buffer 0 size ptr
+      Stubs.Gl.buffer_sub_data Stubs.Gl.element_array_buffer 0 size ptr
 
 (*TODO: Some smart things to avoid errors *)
-let vertex_attrib_pointer idx size typ normalized stride offset =
+let vertex_attrib_pointer :
+    type a.
+    int ->
+    int ->
+    (a, non_empty) data_type ->
+    bool ->
+    int ->
+    int ->
+    unit Core.Error.t =
+ fun idx size typ normalized stride offset ->
   check_error @@ fun () ->
   match typ with
   | Float ->
@@ -467,61 +466,59 @@ let vertex_attrib_pointer idx size typ normalized stride offset =
            Stubs.Gl.false_)
         stride
         (ptr_of_raw_address @@ Nativeint.of_int offset)
+  | Int ->
+      Stubs.Gl.vertex_attrib_pointer idx size Stubs.Gl.int_
+        (if normalized then
+           Stubs.Gl.true_
+         else
+           Stubs.Gl.false_)
+        stride
+        (ptr_of_raw_address @@ Nativeint.of_int offset)
+  | UInt16 ->
+      Stubs.Gl.vertex_attrib_pointer idx size Stubs.Gl.unsigned_short
+        (if normalized then
+           Stubs.Gl.true_
+         else
+           Stubs.Gl.false_)
+        stride
+        (ptr_of_raw_address @@ Nativeint.of_int offset)
+  | Bool ->
+      Stubs.Gl.vertex_attrib_pointer idx size Stubs.Gl.bool_
+        (if normalized then
+           Stubs.Gl.true_
+         else
+           Stubs.Gl.false_)
+        stride
+        (ptr_of_raw_address @@ Nativeint.of_int offset)
 
-let enable_vertex_attrib_array idx s =
-  match s.binded_vao with
-  | None -> error (Gl UnboundedVertexArray)
-  | Some _ -> ok @@ Stubs.Gl.enable_vertex_attrib_array idx
+let enable_vertex_attrib_array idx =
+  check_error @@ fun () -> Stubs.Gl.enable_vertex_attrib_array idx
 
-let use_program s =
-  match s.pid with
-  | None -> error (Gl NoProgram)
-  | Some pid -> ok @@ Stubs.Gl.use_program pid
+let use_program pid =
+  check_error @@ fun () -> Stubs.Gl.use_program pid
 
-let unbind_program _s = ok @@ Stubs.Gl.use_program 0
+let unbind_program () = ok @@ Stubs.Gl.use_program 0
 
 (* TODO: Make a GADT with all these values *)
 type draw_kind = Triangles
 
-let draw_arrays kind first count s =
-  match s.binded_vao with
-  | None -> error (Gl UnboundedVertexArray)
-  | Some _ ->
-      (match kind with
-      | Triangles -> ok @@ Stubs.Gl.draw_arrays Stubs.Gl.triangles first count)
+let draw_arrays kind first count =
+  match kind with
+  | Triangles ->
+      check_error @@ fun () -> Stubs.Gl.draw_arrays Stubs.Gl.triangles first count
 
-let draw_elements kind count s =
-  match s.binded_vao with
-  | None -> error (Gl UnboundedVertexArray)
-  | Some _ ->
-      (match kind with
-      | Triangles ->
-          ok
-          @@ Stubs.Gl.draw_elements Stubs.Gl.triangles count
-               Stubs.Gl.unsigned_short None)
+let draw_elements kind count =
+  match kind with
+  | Triangles ->
+      check_error
+          @@ fun () -> Stubs.Gl.draw_elements Stubs.Gl.triangles count
+               Stubs.Gl.unsigned_short None
 
-let delete_buffer id s =
-  let vbo = List.filter (( <> ) id) s.buffers in
-  set_int (Stubs.Gl.delete_buffers 1) id;
-  ok { s with buffers = vbo }
+let delete_buffer id =
+  check_error @@ fun () -> set_int (Stubs.Gl.delete_buffers 1) id
 
-let finalise s =
-  bind_buffer ArrayBuffer 0 s >>= bind_vertex_array 0
-  >>= fun ({ vaos; _ } as gl) ->
-  Array.of_list (List.map Int32.of_int vaos)
-  |> Bigarray.Array1.of_array Bigarray.int32 Bigarray.c_layout
-  |> fun a ->
-  Stubs.Gl.delete_vertex_arrays (Bigarray.Array1.dim a) a;
-  ok { gl with vaos = [] } >>= fun ({ buffers; _ } as gl) ->
-  Array.of_list (List.map Int32.of_int buffers)
-  |> Bigarray.Array1.of_array Bigarray.int32 Bigarray.c_layout
-  |> fun a ->
-  Stubs.Gl.delete_buffers (Bigarray.Array1.dim a) a;
-  ok { gl with buffers = [] } >>= fun ({ pid; _ } as gl) ->
-  (match pid with Some pid -> Stubs.Gl.delete_program pid | None -> ());
-  ok { gl with pid = None }
+let finalise () =
+  let* _ = bind_buffer ArrayBuffer 0 in
+  let+ _ = bind_vertex_array 0 in
+  ()
 
-let get_vaos s = s.vaos
-let get_buffers s = s.buffers
-let binded_vao s = s.binded_vao
-let binded_vbo s = s.binded_vbo
