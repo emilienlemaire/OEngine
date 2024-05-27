@@ -34,9 +34,10 @@ type gl_error =
   | UnboundedVertexArray
   | NoProgram
   | NotImplementedYet
+  | NoIndexBuffer
 [@@deriving show]
 
-type oengine_error = UnknownState | NoBuffer | BufferNotFound
+type oengine_error = UnknownState | NoBuffer | BufferNotFound | Custom of string
 [@@deriving show]
 
 type error_kind =

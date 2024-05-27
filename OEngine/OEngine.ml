@@ -1,14 +1,12 @@
 open Core.Syntax.Result
 open Result
-open OEngine_lib
 
-module Layer = OEngine_lib.Layer.Make (struct
+module Layer = Layer.Make (struct
   type t = {
     shader : Shader.t;
     blue_shader : Shader.t;
     vertex_array : Vertex_array.t option;
-    vertex_buffer : Buffer.Vertex.t option; [@warning "-69"]
-    index_buffer : Buffer.Index.t option; [@warning "-69"]
+    vertex_buffer : Buffer.VertexBuffer.t option; [@warning "-69"]
     square_vertex_array : Vertex_array.t option;
   }
 
@@ -77,7 +75,6 @@ void main() {
       shader;
       blue_shader;
       vertex_buffer = None;
-      index_buffer = None;
       vertex_array = None;
       square_vertex_array = None;
     }
@@ -90,18 +87,19 @@ void main() {
          0.0;  0.5; 0.0; 0.8; 0.8; 0.2; 1.0 ] [@ocamlformat "disable"]
     in
     let layout =
-      Buffer.BufferLayout.create
+      BufferLayout.create
         [
-          ("a_Position", Buffer.DataType.Float3);
-          ("a_Color", Buffer.DataType.Float4);
+          ("a_Position", DataType.Float3);
+          ("a_Color", DataType.Float4);
         ]
     in
-    let* vertex_buffer = Buffer.Vertex.init vertices layout in
+    let* vertex_buffer = Buffer.VertexBuffer.init vertices layout in
     let* vertex_array =
       Vertex_array.add_vertex_buffer vertex_buffer vertex_array
     in
-    let* index_buffer = Buffer.Index.create [ 0; 1; 2 ] in
-    let* vertex_buffer = Buffer.Vertex.unbind vertex_buffer in
+    let* index_buffer = Buffer.IndexBuffer.create [ 0; 1; 2 ] in
+    let* vertex_array = Vertex_array.index_buffer index_buffer vertex_array in
+    let* vertex_buffer = Buffer.VertexBuffer.unbind vertex_buffer in
     let square_vertex_array = Vertex_array.create () in
     let square_vertices =
       [ -0.75; -0.75; 0.0;
@@ -110,16 +108,16 @@ void main() {
         -0.75;  0.75; 0.0 ] [@ocamlformat "disable"]
     in
     let square_layout =
-      Buffer.BufferLayout.create [ ("a_Position", Buffer.DataType.Float3) ]
+      BufferLayout.create [ ("a_Position", DataType.Float3) ]
     in
     let* square_vertex_buffer =
-      Buffer.Vertex.init square_vertices square_layout
+      Buffer.VertexBuffer.init square_vertices square_layout
     in
     let* square_vertex_array =
       Vertex_array.add_vertex_buffer square_vertex_buffer square_vertex_array
     in
     let square_indices = [ 0; 1; 2; 2; 3; 0 ] in
-    let* square_index_buffer = Buffer.Index.create square_indices in
+    let* square_index_buffer = Buffer.IndexBuffer.create square_indices in
     let* square_vertex_array =
       Vertex_array.index_buffer square_index_buffer square_vertex_array
     in
@@ -138,20 +136,21 @@ void main() {
         shader;
         blue_shader;
         vertex_buffer = Some vertex_buffer;
-        index_buffer = Some index_buffer;
         vertex_array = Some vertex_array;
         square_vertex_array = Some square_vertex_array;
       }
 
   let update s =
-    Stubs.Gl.clear_color 0.1 0.1 0.1 1.0;
+    let r = Renderer.create () in
+    let* r = Renderer.clear_color r 0.1 0.1 0.1 1.0 in
+    let* r = Renderer.clear r in
     Stubs.Gl.clear Stubs.Gl.color_buffer_bit;
     let* _ = Shader.bind s.blue_shader in
     let* _ = Vertex_array.bind (Option.get s.square_vertex_array) in
-    let* _ = Gl.draw_elements Gl.Triangles 6 in
+    let* r = Renderer.draw_indexed r (Option.get s.square_vertex_array) in
     let* _ = Shader.bind s.shader in
     let* _ = Vertex_array.bind (Option.get s.vertex_array) in
-    let* _ = Gl.draw_elements Gl.Triangles 3 in
+    let* _ = Renderer.draw_indexed r (Option.get s.vertex_array) in
     ok s
 
   let detach s =
@@ -168,10 +167,10 @@ void main() {
 end)
 
 let () =
-  let app = OEngine_lib.Application.make (module Layer) in
+  let app = Application.make (module Layer) in
   match app with
   | Ok app ->
-    (match OEngine_lib.Application.run app with
+    (match Application.run app with
     | Ok _ ->
         Format.printf "Application finished normally";
         ()

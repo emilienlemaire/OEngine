@@ -1,0 +1,4 @@
+(library
+  (name renderer_opengl)
+  (implements renderer))
+

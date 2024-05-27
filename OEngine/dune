@@ -1,4 +1,8 @@
 (executable
  (public_name OEngine)
  (name OEngine)
- (libraries OEngine_lib))
+ (libraries
+  OEngine_lib
+  renderer_opengl
+  vertex_buffer_opengl
+  index_buffer_opengl))

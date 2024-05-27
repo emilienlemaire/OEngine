@@ -4,8 +4,8 @@ open Result
 type t = {
   id : int;
   index : int;
-  vertex_buffers: Buffer.Vertex.t list;
-  index_buffer: Buffer.Index.t option;
+  vertex_buffers: Buffer.VertexBuffer.t list;
+  index_buffer: Buffer.IndexBuffer.t option;
 }
 
 let create () =
@@ -22,16 +22,19 @@ let unbind s =
   let+ _ = Gl.bind_vertex_array 0 in
   s
 
-let add_vertex_buffer (vb : Buffer.Vertex.t) s =
+let add_vertex_buffer (vb : Buffer.VertexBuffer.t) s =
   let* _ = Gl.bind_vertex_array s.id in
-  let* _ = Buffer.Vertex.bind vb in
-  let elements = vb.layout.elements in
-  let open Buffer.DataType in
-  let open Buffer.BufferElement in
+  let* _ = Buffer.VertexBuffer.bind vb in
+  let layout = Buffer.VertexBuffer.layout vb in
+  let elements = layout.elements in
+  let open DataType in
+  (* TODO: Add Buffer prefix so it is no confused with other data types*)
+  let open BufferElement in
   let+ id =
     List.fold_left
       (fun acc element ->
         let* id = acc in
+        let layout = Buffer.VertexBuffer.layout vb in
         let+ id =
           match element.typ with
           | Float | Float2 | Float3 | Float4 ->
@@ -39,7 +42,7 @@ let add_vertex_buffer (vb : Buffer.Vertex.t) s =
               let+ _ =
                 Gl.vertex_attrib_pointer id
                   (element_count element.typ)
-                  Gl.Float element.normalized vb.layout.stride element.offset
+                  Gl.Float element.normalized layout.stride element.offset
               in
               id + 1
           | Int | Int2 | Int3 | Int4 ->
@@ -47,7 +50,7 @@ let add_vertex_buffer (vb : Buffer.Vertex.t) s =
               let+ _ =
                 Gl.vertex_attrib_pointer id
                   (element_count element.typ)
-                  Gl.Int element.normalized vb.layout.stride element.offset
+                  Gl.Int element.normalized layout.stride element.offset
               in
               id + 1
           | Bool ->
@@ -55,7 +58,7 @@ let add_vertex_buffer (vb : Buffer.Vertex.t) s =
               let+ _ =
                 Gl.vertex_attrib_pointer id
                   (element_count element.typ)
-                  Gl.Bool element.normalized vb.layout.stride element.offset
+                  Gl.Bool element.normalized layout.stride element.offset
               in
               id + 1
           | Mat3 | Mat4 ->
@@ -68,7 +71,7 @@ let add_vertex_buffer (vb : Buffer.Vertex.t) s =
                     let* _ = Gl.enable_vertex_attrib_array id in
                     let+ _ =
                       Gl.vertex_attrib_pointer id count Gl.Float
-                        element.normalized vb.layout.stride
+                        element.normalized layout.stride
                         (element.offset + (Ctypes.(sizeof float) * count * i))
                     in
                     id + 1)
@@ -83,6 +86,11 @@ let add_vertex_buffer (vb : Buffer.Vertex.t) s =
 
 let index_buffer ib s =
   let* _ = Gl.bind_vertex_array s.id in
-  let+ ib = Buffer.Index.bind ib in
+  let+ ib = Buffer.IndexBuffer.bind ib in
   { s with index_buffer = Some ib }
 
+let index_count s =
+  match s.index_buffer with
+  | None -> error Core.Error.(Gl (NoIndexBuffer))
+  | Some ib ->
+      ok @@ Buffer.IndexBuffer.count ib

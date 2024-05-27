@@ -1,3 +1,52 @@
 (library
- (name OEngine_lib)
- (libraries glfw gl glew core react))
+  (name layer)
+  (modules layer)
+  (libraries core events))
+
+(library
+  (name dequeue)
+  (modules dequeue)
+  (libraries core))
+
+(library
+  (name events)
+  (modules events)
+  (libraries glfw core))
+
+(library
+  (name shader)
+  (modules shader)
+  (libraries core gl))
+
+(library
+  (name vertex_array)
+  (modules vertex_array)
+  (libraries core gl buffer))
+
+(library
+  (name application)
+  (modules application)
+  (libraries
+  core
+  glfw
+  vertex_array
+  shader
+  events
+  dequeue
+  layer
+  buffer
+  imguiml
+  imguiml.imguiml_impl
+  glew))
+
+(library
+  (name OEngine_lib)
+  (modules )
+  (libraries
+    (re_export application)
+    (re_export vertex_array)
+    (re_export shader)
+    (re_export events)
+    (re_export layer)
+    (re_export buffer)
+    (re_export renderer)))

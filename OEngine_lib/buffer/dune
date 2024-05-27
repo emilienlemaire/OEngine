@@ -1,0 +1,21 @@
+(library
+  (name buffer_data)
+  (modules bufferElement bufferLayout dataType)
+  (wrapped false))
+
+(library
+  (name index_buffer)
+  (modules index_buffer)
+  (virtual_modules index_buffer)
+  (libraries core buffer_data))
+
+(library
+  (name vertex_buffer)
+  (modules vertex_buffer)
+  (virtual_modules vertex_buffer)
+  (libraries core buffer_data))
+
+(library
+  (name buffer)
+  (modules buffer)
+  (libraries core vertex_buffer index_buffer))

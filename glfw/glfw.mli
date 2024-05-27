@@ -21,11 +21,13 @@ val set_framebuffer_size_callback :
 val set_swap_interval : int -> t -> t Core.Error.t
 val swap_buffers : t -> t Core.Error.t
 val poll_events : t -> t Core.Error.t
+val get_current_context_size: t -> (int * int) Core.Error.t
 val window_should_close : t -> bool Core.Error.t
 val set_window_should_close : bool -> t -> t Core.Error.t
 val is_init : t -> bool
 val current_context : t -> Window.t option
 val swap_interval : t -> int
+val get_time : unit -> float
 
 val push_layer_event_cb :
   (Events.any_event Events.t Events.event ->

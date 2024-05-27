@@ -1,0 +1,12 @@
+(library
+  (name vertex_buffer_opengl)
+  (modules vertex_buffer)
+  (implements vertex_buffer)
+  (libraries core gl))
+
+(library
+  (name index_buffer_opengl)
+  (modules index_buffer)
+  (implements index_buffer)
+  (libraries core gl))
+

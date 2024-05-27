@@ -37,6 +37,20 @@ let get_string_ len f =
   f a;
   string_of_bigarray a
 
+let clear_color r g b a = Stubs.Gl.clear_color r g b a
+
+type clear_mask = ColorBuffer | DepthBuffer | StencilBuffer
+
+let clear masks =
+  let mask = List.fold_left (fun acc -> function
+    | ColorBuffer -> acc lor Stubs.Gl.color_buffer_bit
+    | DepthBuffer -> acc lor Stubs.Gl.depth_buffer_bit
+    | StencilBuffer -> acc lor Stubs.Gl.stencil_buffer_bit)
+  0
+  masks
+  in
+  Stubs.Gl.clear mask
+
 type shader_type =
   | Vertex
   | Geometry
@@ -407,10 +421,7 @@ let buffer_data :
 
 let buffer_sub_data :
     type a.
-    buffer_target ->
-    (a, non_empty) data_type ->
-    a list ->
-    unit Core.Error.t =
+    buffer_target -> (a, non_empty) data_type -> a list -> unit Core.Error.t =
  fun buffer_type data_typ data ->
   let ptr, size =
     match data_typ with
@@ -439,9 +450,9 @@ let buffer_sub_data :
         in
         (to_voidp @@ bigarray_start array1 ba, Bigarray.Array1.size_in_bytes ba)
   in
-  check_error @@ fun () -> match buffer_type with
-  | ArrayBuffer ->
-      Stubs.Gl.buffer_sub_data Stubs.Gl.array_buffer 0 size ptr
+  check_error @@ fun () ->
+  match buffer_type with
+  | ArrayBuffer -> Stubs.Gl.buffer_sub_data Stubs.Gl.array_buffer 0 size ptr
   | ElementArrayBuffer ->
       Stubs.Gl.buffer_sub_data Stubs.Gl.element_array_buffer 0 size ptr
 
@@ -494,9 +505,7 @@ let vertex_attrib_pointer :
 let enable_vertex_attrib_array idx =
   check_error @@ fun () -> Stubs.Gl.enable_vertex_attrib_array idx
 
-let use_program pid =
-  check_error @@ fun () -> Stubs.Gl.use_program pid
-
+let use_program pid = check_error @@ fun () -> Stubs.Gl.use_program pid
 let unbind_program () = ok @@ Stubs.Gl.use_program 0
 
 (* TODO: Make a GADT with all these values *)
@@ -505,14 +514,15 @@ type draw_kind = Triangles
 let draw_arrays kind first count =
   match kind with
   | Triangles ->
-      check_error @@ fun () -> Stubs.Gl.draw_arrays Stubs.Gl.triangles first count
+      check_error @@ fun () ->
+      Stubs.Gl.draw_arrays Stubs.Gl.triangles first count
 
 let draw_elements kind count =
   match kind with
   | Triangles ->
-      check_error
-          @@ fun () -> Stubs.Gl.draw_elements Stubs.Gl.triangles count
-               Stubs.Gl.unsigned_short None
+      check_error @@ fun () ->
+      Stubs.Gl.draw_elements Stubs.Gl.triangles count Stubs.Gl.unsigned_short
+        None
 
 let delete_buffer id =
   check_error @@ fun () -> set_int (Stubs.Gl.delete_buffers 1) id
@@ -521,4 +531,3 @@ let finalise () =
   let* _ = bind_buffer ArrayBuffer 0 in
   let+ _ = bind_vertex_array 0 in
   ()
-

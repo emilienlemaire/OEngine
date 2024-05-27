@@ -185,6 +185,16 @@ let set_swap_interval interval state =
       ok state
   | None -> ok state
 
+let get_current_context_size s =
+  match s.current_context with
+  | Some c ->
+      let open Ctypes in
+      let width = allocate int 0 in
+      let heigth = allocate int 0 in
+      Stubs.Glfw.get_window_size (Window.as_ptr c) width heigth;
+      ok (!@width, !@heigth)
+  | None -> no_context __FUNCTION__
+
 let window_should_close s =
   match s.current_context with
   | Some c -> ok (Stubs.Glfw.window_should_close (Window.as_ptr c) <> 0)
@@ -229,5 +239,8 @@ let swap_interval state = state.swap_interval
 let finalise s =
   (match s.current_context with Some w -> Window.destroy w | None -> ());
   ok @@ Glfw.terminate ()
+
+let get_time () =
+  Stubs.Glfw.get_time ()
 
 module Events = Events

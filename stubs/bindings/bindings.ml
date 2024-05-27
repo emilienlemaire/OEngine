@@ -5,7 +5,6 @@ module Types = struct
     type ('a, 'b) bigarray = ('a, 'b, Bigarray.c_layout) Bigarray.Array1.t
     type enum = int
     type bitfield = Unsigned.uint
-
     let bitfield : bitfield typ = typedef uint "GLbitfield"
 
     type uint = Unsigned.uint
@@ -109,7 +108,7 @@ module Types = struct
       typedef
         (Foreign.funptr (ptr window @-> int @-> returning void))
         "GLFWwindowfocusfun"
-
+    
     (* 1759 *)
     type framebuffer_size_fun = window structure ptr -> int -> int -> unit
 
@@ -204,6 +203,9 @@ module Constants (T : Ctypes.TYPE) = struct
     let int_ = constant "GL_INT" int
     let unsigned_int = constant "GL_UNSIGNED_INT" int
     let float = constant "GL_FLOAT" int
+
+    (* 678 *)
+    let stencil_buffer_bit = constant "GL_STENCIL_BUFFER_BIT" int
 
     (* 711*)
     let vendor = constant "GL_VENDOR" int
@@ -569,6 +571,10 @@ module Bindings (F : Ctypes.FOREIGN) = struct
     let set_window_should_close =
       foreign "glfwSetWindowShouldClose" (ptr window @-> int @-> returning void)
 
+    (* 3510 *)
+    let get_window_size =
+      foreign "glfwGetWindowSize" (ptr window @-> ptr int @-> ptr int @-> returning void)
+
     (* 4176 *)
     let set_window_user_pointer =
       foreign "glfwSetWindowUserPointer"
@@ -620,6 +626,10 @@ module Bindings (F : Ctypes.FOREIGN) = struct
       foreign "glfwSetScrollCallback"
         (ptr window @-> scroll_fun @-> returning scroll_fun)
 
+    (* 5992 *)
+    let get_time =
+      foreign "glfwGetTime" (void @-> returning double)
+
     (* 6109 *)
     let make_context_current =
       foreign "glfwMakeContextCurrent" (ptr window @-> returning void)
@@ -645,7 +655,6 @@ module Bindings (F : Ctypes.FOREIGN) = struct
   module Gl = struct
     open Types.Gl
     open F
-
     (* 872 *)
     let clear = foreign "glClear" (int_as_uint @-> returning void)
 
