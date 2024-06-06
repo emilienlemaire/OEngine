@@ -1,4 +1,4 @@
 (library
-  (name renderer_opengl)
-  (implements renderer))
-
+ (name renderer_opengl)
+ (implements renderer)
+ (libraries core gl vertex_array_opengl))

@@ -1,11 +1,9 @@
 open Core.Syntax.Result
 
-type t = { id : int; count: int }
+type t = { id : int; count : int }
 
 let create indices =
-  let buffer =
-    (fun buffers -> List.hd buffers) @@ Gl.gen_buffers 1
-  in
+  let buffer = (fun buffers -> List.hd buffers) @@ Gl.gen_buffers 1 in
   let* _ = Gl.bind_buffer ElementArrayBuffer buffer in
   let+ _ = Gl.buffer_data ElementArrayBuffer UInt16 indices StaticDraw in
   { id = buffer; count = List.length indices }
@@ -27,6 +25,4 @@ let delete s =
   let+ _ = Gl.delete_buffer s.id in
   ()
 
-let count s =
-  s.count
-
+let count s = s.count

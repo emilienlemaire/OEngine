@@ -24,4 +24,3 @@ let add element_name element_type s =
     elements = s.elements @ [ element ];
     stride = s.stride + DataType.size_in_bytes element_type;
   }
-

@@ -8,4 +8,3 @@ type t = {
 
 let create ?(offset = 0) ?(normalized = false) name typ size =
   { name; typ; size; offset; normalized }
-

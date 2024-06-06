@@ -1,5 +1,4 @@
 (library
-  (name renderer)
-  (virtual_modules renderer)
-  (libraries vertex_array))
-
+ (name renderer)
+ (virtual_modules renderer)
+ (libraries core vertex_array))

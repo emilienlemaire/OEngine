@@ -5,4 +5,5 @@
   OEngine_lib
   renderer_opengl
   vertex_buffer_opengl
-  index_buffer_opengl))
+  index_buffer_opengl
+  vertex_array_opengl))

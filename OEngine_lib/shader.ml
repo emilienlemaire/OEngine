@@ -2,9 +2,9 @@ open Core.Syntax.Result
 open Result
 
 type kind = Vertex | Fragment
-type t = {id: int; shaders : (kind * int) list }
+type t = { id : int; shaders : (kind * int) list }
 
-let create () : t = { id = 0 ; shaders = [] }
+let create () : t = { id = 0; shaders = [] }
 
 let add_shader kind src s =
   match kind with

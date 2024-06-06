@@ -240,7 +240,6 @@ let finalise s =
   (match s.current_context with Some w -> Window.destroy w | None -> ());
   ok @@ Glfw.terminate ()
 
-let get_time () =
-  Stubs.Glfw.get_time ()
+let get_time () = Stubs.Glfw.get_time ()
 
 module Events = Events

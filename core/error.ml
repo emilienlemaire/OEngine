@@ -37,7 +37,11 @@ type gl_error =
   | NoIndexBuffer
 [@@deriving show]
 
-type oengine_error = UnknownState | NoBuffer | BufferNotFound | Custom of string
+type oengine_error =
+  | UnknownState
+  | NoBuffer
+  | BufferNotFound
+  | Custom of string
 [@@deriving show]
 
 type error_kind =

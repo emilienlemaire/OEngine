@@ -25,4 +25,3 @@ let element_count = function
   | Float | Int | Bool -> 1
   | Float3 | Int3 | Mat3 -> 3
   | Float4 | Int4 | Mat4 -> 4
-

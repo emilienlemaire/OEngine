@@ -6,5 +6,4 @@ type t = {
   normalized : bool;
 }
 
-val create: ?offset:int -> ?normalized:bool -> string -> DataType.t -> int -> t
-
+val create : ?offset:int -> ?normalized:bool -> string -> DataType.t -> int -> t

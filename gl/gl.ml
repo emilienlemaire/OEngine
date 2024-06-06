@@ -42,12 +42,13 @@ let clear_color r g b a = Stubs.Gl.clear_color r g b a
 type clear_mask = ColorBuffer | DepthBuffer | StencilBuffer
 
 let clear masks =
-  let mask = List.fold_left (fun acc -> function
-    | ColorBuffer -> acc lor Stubs.Gl.color_buffer_bit
-    | DepthBuffer -> acc lor Stubs.Gl.depth_buffer_bit
-    | StencilBuffer -> acc lor Stubs.Gl.stencil_buffer_bit)
-  0
-  masks
+  let mask =
+    List.fold_left
+      (fun acc -> function
+        | ColorBuffer -> acc lor Stubs.Gl.color_buffer_bit
+        | DepthBuffer -> acc lor Stubs.Gl.depth_buffer_bit
+        | StencilBuffer -> acc lor Stubs.Gl.stencil_buffer_bit)
+      0 masks
   in
   Stubs.Gl.clear mask
 

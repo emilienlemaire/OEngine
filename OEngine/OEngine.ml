@@ -3,6 +3,7 @@ open Result
 
 module Layer = Layer.Make (struct
   type t = {
+    renderer : Renderer.t;
     shader : Shader.t;
     blue_shader : Shader.t;
     vertex_array : Vertex_array.t option;
@@ -74,6 +75,7 @@ void main() {
     {
       shader;
       blue_shader;
+      renderer = Renderer.create ();
       vertex_buffer = None;
       vertex_array = None;
       square_vertex_array = None;
@@ -88,17 +90,16 @@ void main() {
     in
     let layout =
       BufferLayout.create
-        [
-          ("a_Position", DataType.Float3);
-          ("a_Color", DataType.Float4);
-        ]
+        [ ("a_Position", DataType.Float3); ("a_Color", DataType.Float4) ]
     in
     let* vertex_buffer = Buffer.VertexBuffer.init vertices layout in
     let* vertex_array =
       Vertex_array.add_vertex_buffer vertex_buffer vertex_array
     in
     let* index_buffer = Buffer.IndexBuffer.create [ 0; 1; 2 ] in
-    let* vertex_array = Vertex_array.index_buffer index_buffer vertex_array in
+    let* vertex_array =
+      Vertex_array.set_index_buffer index_buffer vertex_array
+    in
     let* vertex_buffer = Buffer.VertexBuffer.unbind vertex_buffer in
     let square_vertex_array = Vertex_array.create () in
     let square_vertices =
@@ -119,7 +120,7 @@ void main() {
     let square_indices = [ 0; 1; 2; 2; 3; 0 ] in
     let* square_index_buffer = Buffer.IndexBuffer.create square_indices in
     let* square_vertex_array =
-      Vertex_array.index_buffer square_index_buffer square_vertex_array
+      Vertex_array.set_index_buffer square_index_buffer square_vertex_array
     in
     let* shader =
       Shader.(add_shader Vertex vertex_shader_source s.shader)
@@ -133,6 +134,7 @@ void main() {
     in
     ok
       {
+        s with
         shader;
         blue_shader;
         vertex_buffer = Some vertex_buffer;
@@ -141,16 +143,12 @@ void main() {
       }
 
   let update s =
-    let r = Renderer.create () in
-    let* r = Renderer.clear_color r 0.1 0.1 0.1 1.0 in
+    let* r = Renderer.set_clear_color 0.1 0.1 0.1 1.0 s.renderer in
     let* r = Renderer.clear r in
-    Stubs.Gl.clear Stubs.Gl.color_buffer_bit;
     let* _ = Shader.bind s.blue_shader in
-    let* _ = Vertex_array.bind (Option.get s.square_vertex_array) in
-    let* r = Renderer.draw_indexed r (Option.get s.square_vertex_array) in
+    let* r = Renderer.submit r (Option.get s.square_vertex_array) in
     let* _ = Shader.bind s.shader in
-    let* _ = Vertex_array.bind (Option.get s.vertex_array) in
-    let* _ = Renderer.draw_indexed r (Option.get s.vertex_array) in
+    let* _ = Renderer.submit r (Option.get s.vertex_array) in
     ok s
 
   let detach s =
@@ -170,14 +168,14 @@ let () =
   let app = Application.make (module Layer) in
   match app with
   | Ok app ->
-    (match Application.run app with
-    | Ok _ ->
-        Format.printf "Application finished normally";
-        ()
-    | Error err ->
-        Format.printf "Application finished with errors:@\n%a"
-          Core.Error.pp_error_kind err;
-        ())
-    | Error err ->
-        Format.printf "Application could not be created:@\n%a"
+      (match Application.run app with
+      | Ok _ ->
+          Format.printf "Application finished normally";
+          ()
+      | Error err ->
+          Format.printf "Application finished with errors:@\n%a"
+            Core.Error.pp_error_kind err;
+          ())
+  | Error err ->
+      Format.printf "Application could not be created:@\n%a"
         Core.Error.pp_error_kind err

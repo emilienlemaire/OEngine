@@ -1,0 +1,4 @@
+(library
+ (name vertex_array)
+ (virtual_modules vertex_array)
+ (libraries core buffer))

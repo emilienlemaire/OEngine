@@ -4,14 +4,12 @@ open Result
 type t = {
   id : int;
   index : int;
-  vertex_buffers: Buffer.VertexBuffer.t list;
-  index_buffer: Buffer.IndexBuffer.t option;
+  vertex_buffers : Buffer.VertexBuffer.t list;
+  index_buffer : Buffer.IndexBuffer.t option;
 }
 
 let create () =
-  let va =
-    (fun vas -> List.hd vas) @@ Gl.create_vertex_arrays 1
-  in
+  let va = (fun vas -> List.hd vas) @@ Gl.create_vertex_arrays 1 in
   { id = va; index = 0; vertex_buffers = []; index_buffer = None }
 
 let bind s =
@@ -82,15 +80,14 @@ let add_vertex_buffer (vb : Buffer.VertexBuffer.t) s =
         id)
       (ok s.index) elements
   in
-  { s with index = id; vertex_buffers = vb::s.vertex_buffers }
+  { s with index = id; vertex_buffers = vb :: s.vertex_buffers }
 
-let index_buffer ib s =
+let set_index_buffer ib s =
   let* _ = Gl.bind_vertex_array s.id in
   let+ ib = Buffer.IndexBuffer.bind ib in
   { s with index_buffer = Some ib }
 
 let index_count s =
   match s.index_buffer with
-  | None -> error Core.Error.(Gl (NoIndexBuffer))
-  | Some ib ->
-      ok @@ Buffer.IndexBuffer.count ib
+  | None -> error Core.Error.(Gl NoIndexBuffer)
+  | Some ib -> ok @@ Buffer.IndexBuffer.count ib
