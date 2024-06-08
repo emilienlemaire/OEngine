@@ -1,6 +1,9 @@
 open Core.Syntax.Result
 
-type t = { id : int; count : int }
+type t =
+  { id : int;
+    count : int
+  }
 
 let create indices =
   let buffer = (fun buffers -> List.hd buffers) @@ Gl.gen_buffers 1 in

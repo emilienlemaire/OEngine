@@ -1,4 +1,4 @@
 (library
  (name renderer)
  (virtual_modules renderer)
- (libraries core vertex_array))
+ (libraries core vertex_array shader math))

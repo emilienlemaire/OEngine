@@ -1,21 +1,25 @@
 open Core.Syntax.Result
 open Result
+open Math
 
 module Layer = Layer.Make (struct
-  type t = {
-    renderer : Renderer.t;
-    shader : Shader.t;
-    blue_shader : Shader.t;
-    vertex_array : Vertex_array.t option;
-    vertex_buffer : Buffer.VertexBuffer.t option; [@warning "-69"]
-    square_vertex_array : Vertex_array.t option;
-  }
+  type t =
+    { renderer : Renderer.t;
+      shader : Shader.t;
+      blue_shader : Shader.t;
+      vertex_array : Vertex_array.t option;
+      vertex_buffer : Buffer.VertexBuffer.t option; [@warning "-69"]
+      square_vertex_array : Vertex_array.t option;
+      camera : Renderer.Orthographic_camera.t
+    }
 
   let vertex_shader_source =
     {|
 #version 460
 layout (location = 0) in vec3 a_Position;
 layout (location = 1) in vec4 a_Color;
+
+uniform mat4 u_ViewProjection;
 
 out vec3 v_Position;
 out vec4 v_Color;
@@ -24,7 +28,7 @@ void main()
 {
   v_Position = a_Position;
   v_Color = a_Color;
-  gl_Position = vec4(a_Position, 1.0);
+  gl_Position = u_ViewProjection * vec4(a_Position, 1.0);
 }|}
 
   let fragment_shader_source =
@@ -48,11 +52,13 @@ void main()
 
 layout (location = 0) in vec3 a_Position;
 
+uniform mat4 u_ViewProjection;
+
 out vec3 v_Position;
 
 void main() {
   v_Position = a_Position;
-  gl_Position = vec4(a_Position, 1.0);
+  gl_Position = u_ViewProjection * vec4(a_Position, 1.0);
 }
     |}
 
@@ -72,13 +78,13 @@ void main() {
   let create () =
     let shader = Shader.create () in
     let blue_shader = Shader.create () in
-    {
-      shader;
+    { shader;
       blue_shader;
       renderer = Renderer.create ();
       vertex_buffer = None;
       vertex_array = None;
       square_vertex_array = None;
+      camera = Renderer.Orthographic_camera.make (-1.6) 1.6 (-0.9) 0.9
     }
 
   let attach s =
@@ -89,17 +95,12 @@ void main() {
          0.0;  0.5; 0.0; 0.8; 0.8; 0.2; 1.0 ] [@ocamlformat "disable"]
     in
     let layout =
-      BufferLayout.create
-        [ ("a_Position", DataType.Float3); ("a_Color", DataType.Float4) ]
+      BufferLayout.create [ ("a_Position", DataType.Float3); ("a_Color", DataType.Float4) ]
     in
     let* vertex_buffer = Buffer.VertexBuffer.init vertices layout in
-    let* vertex_array =
-      Vertex_array.add_vertex_buffer vertex_buffer vertex_array
-    in
+    let* vertex_array = Vertex_array.add_vertex_buffer vertex_buffer vertex_array in
     let* index_buffer = Buffer.IndexBuffer.create [ 0; 1; 2 ] in
-    let* vertex_array =
-      Vertex_array.set_index_buffer index_buffer vertex_array
-    in
+    let* vertex_array = Vertex_array.set_index_buffer index_buffer vertex_array in
     let* vertex_buffer = Buffer.VertexBuffer.unbind vertex_buffer in
     let square_vertex_array = Vertex_array.create () in
     let square_vertices =
@@ -108,12 +109,8 @@ void main() {
          0.75;  0.75; 0.0;
         -0.75;  0.75; 0.0 ] [@ocamlformat "disable"]
     in
-    let square_layout =
-      BufferLayout.create [ ("a_Position", DataType.Float3) ]
-    in
-    let* square_vertex_buffer =
-      Buffer.VertexBuffer.init square_vertices square_layout
-    in
+    let square_layout = BufferLayout.create [ ("a_Position", DataType.Float3) ] in
+    let* square_vertex_buffer = Buffer.VertexBuffer.init square_vertices square_layout in
     let* square_vertex_array =
       Vertex_array.add_vertex_buffer square_vertex_buffer square_vertex_array
     in
@@ -133,22 +130,27 @@ void main() {
       >>= Shader.create_program
     in
     ok
-      {
-        s with
+      { s with
         shader;
         blue_shader;
         vertex_buffer = Some vertex_buffer;
         vertex_array = Some vertex_array;
-        square_vertex_array = Some square_vertex_array;
+        square_vertex_array = Some square_vertex_array
       }
 
   let update s =
     let* r = Renderer.set_clear_color 0.1 0.1 0.1 1.0 s.renderer in
     let* r = Renderer.clear r in
-    let* _ = Shader.bind s.blue_shader in
-    let* r = Renderer.submit r (Option.get s.square_vertex_array) in
+    let c =
+      Renderer.Orthographic_camera.set_position
+        (Vec3.of_scalars Base.Float32_elt 0.5 0.5 0.)
+        s.camera
+      |> Renderer.Orthographic_camera.set_rotation 45.
+    in
+    let* r = Renderer.begin_scene c r in
+    let* r = Renderer.submit (Option.get s.square_vertex_array) s.blue_shader r in
     let* _ = Shader.bind s.shader in
-    let* _ = Renderer.submit r (Option.get s.vertex_array) in
+    let* _ = Renderer.submit (Option.get s.vertex_array) s.shader r in
     ok s
 
   let detach s =
@@ -157,9 +159,7 @@ void main() {
     ok ()
 
   let event e s =
-    Format.printf "Layer got event: %a@\n"
-      (Glfw.Events.pp_event Glfw.Events.pp)
-      e;
+    Format.printf "Layer got event: %a@\n" (Glfw.Events.pp_event Glfw.Events.pp) e;
     Format.pp_print_flush Format.std_formatter ();
     ok (e, s)
 end)
@@ -168,14 +168,11 @@ let () =
   let app = Application.make (module Layer) in
   match app with
   | Ok app ->
-      (match Application.run app with
-      | Ok _ ->
-          Format.printf "Application finished normally";
-          ()
-      | Error err ->
-          Format.printf "Application finished with errors:@\n%a"
-            Core.Error.pp_error_kind err;
-          ())
-  | Error err ->
-      Format.printf "Application could not be created:@\n%a"
-        Core.Error.pp_error_kind err
+    ( match Application.run app with
+    | Ok _ ->
+      Format.printf "Application finished normally";
+      ()
+    | Error err ->
+      Format.printf "Application finished with errors:@\n%a" Core.Error.pp_error_kind err;
+      () )
+  | Error err -> Format.printf "Application could not be created:@\n%a" Core.Error.pp_error_kind err

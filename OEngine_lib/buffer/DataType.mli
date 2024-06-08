@@ -12,4 +12,5 @@ type t =
   | Bool
 
 val size_in_bytes : t -> int
+
 val element_count : t -> int

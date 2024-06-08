@@ -13,10 +13,31 @@ type ('a, 'b) elt =
 type 'a binop = 'a -> 'a -> 'a
 
 val kind : ('a, 'b) elt -> ('a, 'b) Bigarray.kind
+
 val elt_of_kind : ('a, 'b) Bigarray.kind -> ('a, 'b) elt
+
 val add : ('a, 'b) elt -> 'a binop
+
 val sub : ('a, 'b) elt -> 'a binop
+
 val mul : ('a, 'b) elt -> 'a binop
+
 val div : ('a, 'b) elt -> 'a binop
+
+val neg : ('a, 'b) elt -> 'a -> 'a
+
 val zero : ('a, 'b) elt -> 'a
+
 val one : ('a, 'b) elt -> 'a
+
+val of_float : ('a, 'b) elt -> float -> 'a
+
+val to_float : ('a, 'b) elt -> 'a -> float
+
+val sqrt : (float, 'b) elt -> float -> float
+
+val inv_sqrt : (float, 'b) elt -> float -> float
+
+val radians : float -> float
+
+val degrees : float -> float

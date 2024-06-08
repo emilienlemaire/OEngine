@@ -16,7 +16,7 @@
 (library
  (name shader)
  (modules shader)
- (libraries core gl))
+ (libraries core gl math))
 
 (library
  (name application)

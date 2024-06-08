@@ -1,9 +1,16 @@
 (* open React *)
 
-type 'a event = Live of 'a | Handled of 'a [@@deriving show]
+type 'a event =
+  | Live of 'a
+  | Handled of 'a
+[@@deriving show]
 
 module Actions = struct
-  type t = RELEASE | PRESS | REPEAT [@@deriving show]
+  type t =
+    | RELEASE
+    | PRESS
+    | REPEAT
+  [@@deriving show]
 
   let of_glfw = function
     | x when x = Stubs.Glfw.release -> RELEASE
@@ -388,7 +395,13 @@ module Keys = struct
 end
 
 module ModifierKeys = struct
-  type t = Shift | Control | Alt | Super | CapsLock | NumLock
+  type t =
+    | Shift
+    | Control
+    | Alt
+    | Super
+    | CapsLock
+    | NumLock
   [@@deriving show]
 
   let of_glfw = function
@@ -471,10 +484,16 @@ module WindowClose = struct
 end
 
 module WindowResize = struct
-  type t = { width : int; height : int } [@@deriving show]
+  type t =
+    { width : int;
+      height : int
+    }
+  [@@deriving show]
 
   let create ~width ~height = { width; height }
+
   let width e = e.width
+
   let height e = e.height
 end
 
@@ -491,10 +510,16 @@ module WindowFocusLost = struct
 end
 
 module WindowMoved = struct
-  type t = { x : int; y : int } [@@deriving show]
+  type t =
+    { x : int;
+      y : int
+    }
+  [@@deriving show]
 
   let create ~x ~y = { x; y }
+
   let x e = e.x
+
   let y e = e.y
 end
 
@@ -517,67 +542,111 @@ module AppUpdate = struct
 end
 
 module KeyPressed = struct
-  type t = { key : Keys.t; modifiers : ModifierKeys.t list } [@@deriving show]
+  type t =
+    { key : Keys.t;
+      modifiers : ModifierKeys.t list
+    }
+  [@@deriving show]
 
   let create ~key ~modifiers = { key; modifiers }
+
   let key e = e.key
+
   let modifiers e = e.modifiers
 end
 
 module KeyRepeated = struct
-  type t = { key : Keys.t; modifiers : ModifierKeys.t list } [@@deriving show]
+  type t =
+    { key : Keys.t;
+      modifiers : ModifierKeys.t list
+    }
+  [@@deriving show]
 
   let create ~key ~modifiers = { key; modifiers }
+
   let key e = e.key
+
   let modifiers e = e.modifiers
 end
 
 module KeyReleased = struct
-  type t = { key : Keys.t; modifiers : ModifierKeys.t list } [@@deriving show]
+  type t =
+    { key : Keys.t;
+      modifiers : ModifierKeys.t list
+    }
+  [@@deriving show]
 
   let create ~key ~modifiers = { key; modifiers }
+
   let key e = e.key
+
   let modifiers e = e.modifiers
 end
 
 module MouseButtonPressed = struct
-  type t = { button : MouseButtons.t; modifiers : ModifierKeys.t list }
+  type t =
+    { button : MouseButtons.t;
+      modifiers : ModifierKeys.t list
+    }
   [@@deriving show]
 
   let create ~button ~modifiers = { button; modifiers }
+
   let button e = e.button
+
   let modifiers e = e.modifiers
 end
 
 module MouseButtonReleased = struct
-  type t = { button : MouseButtons.t; modifiers : ModifierKeys.t list }
+  type t =
+    { button : MouseButtons.t;
+      modifiers : ModifierKeys.t list
+    }
   [@@deriving show]
 
   let create ~button ~modifiers = { button; modifiers }
+
   let button e = e.button
+
   let modifiers e = e.modifiers
 end
 
 module MouseMoved = struct
-  type t = { x : float; y : float } [@@deriving show]
+  type t =
+    { x : float;
+      y : float
+    }
+  [@@deriving show]
 
   let create ~x ~y = { x; y }
+
   let x e = e.x
+
   let y e = e.y
 end
 
 module MouseScrolled = struct
-  type t = { x_offset : float; y_offset : float } [@@deriving show]
+  type t =
+    { x_offset : float;
+      y_offset : float
+    }
+  [@@deriving show]
 
   let create ~x_offset ~y_offset = { x_offset; y_offset }
+
   let x_offset e = e.x_offset
+
   let y_offset e = e.y_offset
 end
 
 type application_event = [ `Application ] [@@deriving show]
+
 type input_event = [ `Input ] [@@deriving show]
+
 type keyboard_event = [ `Keyboard ] [@@deriving show]
+
 type mouse_event = [ `Mouse ] [@@deriving show]
+
 type mouse_button_event = [ `MouseButton ] [@@deriving show]
 
 type any_event =
@@ -585,7 +654,8 @@ type any_event =
   | input_event
   | keyboard_event
   | mouse_event
-  | mouse_button_event ]
+  | mouse_button_event
+  ]
 [@@deriving show]
 
 type _ t =
@@ -611,16 +681,25 @@ type _ t =
 [@@deriving show]
 
 let create e = Live e
+
 let bind f : 'a event -> 'b event = function Live e -> f e | Handled v -> f v
+
 let map f = function Live e -> Live (f e) | Handled v -> Handled v
+
 let handle f = function Live e -> Handled (f e) | Handled v -> Handled v
 
 module Syntax = struct
   let ( let* ) = bind
+
   let ( let+ ) = map
+
   let ( let| ) = handle
+
   let ( >>= ) = bind
+
   let ( >>| ) = handle
+
   let ( *> ) = map
+
   let ( <* ) e f = map f e
 end

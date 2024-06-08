@@ -1,6 +1,9 @@
 open Core.Syntax.Result
 
-type t = { id : int; layout : BufferLayout.t }
+type t =
+  { id : int;
+    layout : BufferLayout.t
+  }
 
 let init vertices layout =
   let buffer = (fun buffers -> List.hd buffers) @@ Gl.gen_buffers 1 in

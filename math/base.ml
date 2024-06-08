@@ -73,6 +73,16 @@ let div : type a b. (a, b) elt -> a binop = function
   | Float32_elt -> ( /. )
   | Float64_elt -> ( /. )
 
+let neg : type a b. (a, b) elt -> a -> a = function
+  | Int8_signed_elt -> ( ~- )
+  | Int8_unsigned_elt -> ( ~- )
+  | Int16_signed_elt -> ( ~- )
+  | Int16_unsigned_elt -> ( ~- )
+  | Int32_elt -> Int32.neg
+  | Int64_elt -> Int64.neg
+  | Float32_elt -> ( ~-. )
+  | Float64_elt -> ( ~-. )
+
 let zero : type a b. (a, b) elt -> a = function
   | Int8_signed_elt -> 0
   | Int8_unsigned_elt -> 0
@@ -92,3 +102,32 @@ let one : type a b. (a, b) elt -> a = function
   | Int64_elt -> Int64.one
   | Float32_elt -> 1.
   | Float64_elt -> 1.
+
+let of_float : type a b. (a, b) elt -> float -> a = function
+  | Int8_signed_elt -> int_of_float
+  | Int8_unsigned_elt -> int_of_float
+  | Int16_signed_elt -> int_of_float
+  | Int16_unsigned_elt -> int_of_float
+  | Int32_elt -> Int32.of_float
+  | Int64_elt -> Int64.of_float
+  | Float32_elt -> Fun.id
+  | Float64_elt -> Fun.id
+
+let to_float : type a b. (a, b) elt -> a -> float = function
+  | Int8_signed_elt -> float_of_int
+  | Int8_unsigned_elt -> float_of_int
+  | Int16_signed_elt -> float_of_int
+  | Int16_unsigned_elt -> float_of_int
+  | Int32_elt -> Int32.to_float
+  | Int64_elt -> Int64.to_float
+  | Float32_elt -> Fun.id
+  | Float64_elt -> Fun.id
+
+let sqrt : type b. (float, b) elt -> float -> float = function _ -> sqrt
+
+let inv_sqrt : type b. (float, b) elt -> float -> float = function
+  | _ -> fun x -> 1. /. Stdlib.sqrt x
+
+let radians degrees = degrees *. (Float.pi /. 180.)
+
+let degrees radians = radians *. (180. /. Float.pi)

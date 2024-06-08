@@ -1,5 +1,9 @@
 type t
-type opengl_profile = Any | Core | Compat
+
+type opengl_profile =
+  | Any
+  | Core
+  | Compat
 
 type _ window_hint =
   | Context_version_major : int window_hint
@@ -18,5 +22,7 @@ val make :
   t
 
 val destroy : t -> unit
+
 val as_ptr : t -> Stubs.Glfw.Types.window Ctypes.structure Ctypes.ptr
+
 val of_ptr : Stubs.Glfw.Types.window Ctypes.structure Ctypes.ptr -> t

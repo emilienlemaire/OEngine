@@ -20,15 +20,16 @@ let _get_broadcasted_dims dims_a dims_b =
     if val_a = val_b then
       dims_c.(i) <- val_a
     else if val_a != 1 && val_b != 1 then
-      raise
-        (Invalid_argument "The arrays cannot be broadcast into the same shape")
+      raise (Invalid_argument "The arrays cannot be broadcast into the same shape")
     else
       dims_c.(i) <- Stdlib.max val_a val_b
   done;
   (ext_dims_a, ext_dims_b, dims_c)
 
 let shape = Genarray.dims
+
 let kind = Genarray.kind
+
 let empty kind dims = Genarray.create kind c_layout dims
 
 let _get_broadcasted_index ind dims =
@@ -52,17 +53,15 @@ let _next_index ind dims =
   while !p >= 0 && not !ok do
     if ind.(!p) + 1 < dims.(!p) then (
       ind.(!p) <- ind.(!p) + 1;
-      ok := true)
+      ok := true )
     else (
       ind.(!p) <- 0;
-      p := !p - 1)
+      p := !p - 1 )
   done;
   !ok
 
 let _broadcasted_op ?out varr_a varr_b op_fun =
-  let dims_a, dims_b, dims_c =
-    _get_broadcasted_dims (shape varr_a) (shape varr_b)
-  in
+  let dims_a, dims_b, dims_c = _get_broadcasted_dims (shape varr_a) (shape varr_b) in
   let _kind = kind varr_a in
   let varr_a = reshape varr_a dims_a in
   let varr_b = reshape varr_b dims_b in
@@ -72,8 +71,7 @@ let _broadcasted_op ?out varr_a varr_b op_fun =
   while not !should_stop do
     let ind_a = _get_broadcasted_index ind dims_a in
     let ind_b = _get_broadcasted_index ind dims_b in
-    Genarray.set varr_c ind
-      (op_fun (Genarray.get varr_a ind_a) (Genarray.get varr_b ind_b));
+    Genarray.set varr_c ind (op_fun (Genarray.get varr_a ind_a) (Genarray.get varr_b ind_b));
     if not (_next_index ind dims_c) then
       should_stop := true
   done;
@@ -81,9 +79,11 @@ let _broadcasted_op ?out varr_a varr_b op_fun =
 
 module type VEC_SPEC = sig
   type t
+
   type elt
 
   val length : int
+
   val kind : (t, elt) Bigarray.kind
 end
 
@@ -95,6 +95,7 @@ end
 
 module type VEC4_SPEC = sig
   type t
+
   type elt
 
   val kind : (t, elt) Bigarray.kind
@@ -115,6 +116,7 @@ end
 module Vec4_Float = struct
   include Vec4 (struct
     type t = float
+
     type elt = float64_elt
 
     let kind = Float64
