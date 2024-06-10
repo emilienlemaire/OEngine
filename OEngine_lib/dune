@@ -14,11 +14,6 @@
  (libraries glfw core))
 
 (library
- (name shader)
- (modules shader)
- (libraries core gl math))
-
-(library
  (name application)
  (modules application)
  (libraries

@@ -12,6 +12,57 @@ let share _arr = (4, 4)
 
 let init elt f = Genarray.init (Base.kind elt) c_layout [| 4; 4 |] (fun arr -> f arr.(0) arr.(1))
 
+let _set_unit : type a b. (a, b) t -> int * int -> a -> unit =
+ fun mat (i, j) v -> Genarray.set mat [| i; j |] v
+
+let _set_vec4 : type a b. (a, b) t -> int -> (a, b) Vec4.t -> (a, b) t =
+ fun mat idx vec ->
+  let res = Genarray.create (Genarray.kind mat) c_layout [| 4; 4 |] in
+  Genarray.blit mat res;
+  let slice = Genarray.slice_left res [| idx |] in
+  let gvec = Vec4.as_genarray vec in
+  Genarray.blit gvec slice;
+  res
+
+let _set_vec4' : type a b. (a, b) t -> int -> (a, b) Vec4.t -> unit =
+ fun mat idx vec ->
+  let slice = Genarray.slice_left mat [| idx |] in
+  let gvec = Vec4.as_genarray vec in
+  Genarray.blit gvec slice
+
+let _set_vec3 : type a b. (a, b) t -> int -> (a, b) Vec3.t -> (a, b) t =
+ fun mat idx vec ->
+  let res = Genarray.create (Genarray.kind mat) c_layout [| 4; 4 |] in
+  Genarray.blit mat res;
+  let slice = Genarray.slice_left res [| idx |] in
+  let sub = Genarray.sub_left slice 0 3 in
+  let gvec = Vec3.as_genarray vec in
+  Genarray.blit gvec sub;
+  res
+
+let _set_vec2 : type a b. (a, b) t -> int -> (a, b) Vec2.t -> (a, b) t =
+ fun mat idx vec ->
+  let res = Genarray.create (Genarray.kind mat) c_layout [| 4; 4 |] in
+  Genarray.blit mat res;
+  let slice = Genarray.slice_left res [| idx |] in
+  let sub = Genarray.sub_left slice 0 2 in
+  let gvec = Vec2.as_genarray vec in
+  Genarray.blit gvec sub;
+  res
+
+let set : type a b. (a, b) t -> int -> int -> a -> (a, b) t =
+ fun mat i j v ->
+  Genarray.set mat [| i; j |] v;
+  mat
+
+let get : type a b. (a, b) t -> int * int -> a = fun mat (i, j) -> Genarray.get mat [| i; j |]
+
+let get_col : type a b. (a, b) t -> int -> (a, b) Vec4.t =
+ fun mat i ->
+  let slice = Genarray.slice_left mat [| i |] in
+  Vec4.of_genarray slice
+
+
 let id elt =
   let arr = array2_of_genarray @@ zeros elt in
   let one = Base.one elt in
@@ -53,89 +104,51 @@ let div : type a b. (a, b) mat_op = fun m1 m2 -> _mat_member_op Base.div m1 m2
 
 let mul : type a b. (a, b) mat_op =
  fun m1 m2 ->
-  let elt = Base.elt_of_kind @@ Genarray.kind m1 in
-  let ( * ) = Base.mul elt in
-  let ( + ) = Base.add elt in
-  let arr1 = array2_of_genarray m1 in
-  let arr2 = array2_of_genarray m2 in
-  let rec c i j k acc =
-    if k = 4 then
-      acc
-    else
-      let a = Array2.unsafe_get arr1 i k in
-      let b = Array2.unsafe_get arr2 k j in
-      let acc = acc + (a * b) in
-      c i j (Int.add k 1) acc
-  in
-  Genarray.init (Base.kind elt) c_layout [| 4; 4 |] (fun arr -> c arr.(0) arr.(1) 0 (Base.one elt))
+   let elt = Base.elt_of_kind (Genarray.kind m1) in
+   let src_a0 = get_col m1 0 in
+   let src_a1 = get_col m1 1 in
+   let src_a2 = get_col m1 2 in
+   let src_a3 = get_col m1 3 in
 
-let _set_unit : type a b. (a, b) t -> int * int -> a -> unit =
- fun mat (i, j) v -> Genarray.set mat [| i; j |] v
+   let src_b0 = get_col m2 0 in
+   let src_b1 = get_col m2 1 in
+   let src_b2 = get_col m2 2 in
+   let src_b3 = get_col m2 3 in
 
-let set : type a b. (a, b) t -> int -> int -> a -> (a, b) t =
- fun mat i j v ->
-  Genarray.set mat [| i; j |] v;
-  mat
+   let res = empty elt in
+  (*  *)
+   let tmp = Vec4.scalar_mul (Vec4.x src_b0) src_a0 in
+   let tmp = Vec4.add tmp (Vec4.scalar_mul (Vec4.y src_b0) src_a1) in
+   let tmp = Vec4.add tmp (Vec4.scalar_mul (Vec4.z src_b0) src_a2) in
+   let tmp = Vec4.add tmp (Vec4.scalar_mul (Vec4.w src_b0) src_a3) in
+   let res = _set_vec4 res 0 tmp in
 
-let get : type a b. (a, b) t -> int * int -> a = fun mat (i, j) -> Genarray.get mat [| i; j |]
+   let tmp = Vec4.scalar_mul (Vec4.x src_b1) src_a0 in
+   let tmp = Vec4.add tmp (Vec4.scalar_mul (Vec4.y src_b1) src_a1) in
+   let tmp = Vec4.add tmp (Vec4.scalar_mul (Vec4.z src_b1) src_a2) in
+   let tmp = Vec4.add tmp (Vec4.scalar_mul (Vec4.w src_b1) src_a3) in
+   let res = _set_vec4 res 1 tmp in
 
-let get_col : type a b. (a, b) t -> int -> (a, b) Vec4.t =
- fun mat i ->
-  let slice = Genarray.slice_left mat [| i |] in
-  Vec4.of_genarray slice
+   let tmp = Vec4.scalar_mul (Vec4.x src_b2) src_a0 in
+   let tmp = Vec4.add tmp (Vec4.scalar_mul (Vec4.y src_b2) src_a1) in
+   let tmp = Vec4.add tmp (Vec4.scalar_mul (Vec4.z src_b2) src_a2) in
+   let tmp = Vec4.add tmp (Vec4.scalar_mul (Vec4.w src_b2) src_a3) in
+   let res = _set_vec4 res 2 tmp in
+
+   let tmp = Vec4.scalar_mul (Vec4.x src_b3) src_a0 in
+   let tmp = Vec4.add tmp (Vec4.scalar_mul (Vec4.y src_b3) src_a1) in
+   let tmp = Vec4.add tmp (Vec4.scalar_mul (Vec4.z src_b3) src_a2) in
+   let tmp = Vec4.add tmp (Vec4.scalar_mul (Vec4.w src_b3) src_a3) in
+   let res = _set_vec4 res 3 tmp in
+   res
 
 module Syntax = struct
-  let ( !+! ) = add
-
-  let ( !-! ) = sub
-
-  let ( !*! ) = mul
-
-  let ( !/! ) = div
-
-  let ( *! ) = scalar_mul
-
   let ( .![] ) = get
 
   let ( .![]<- ) = _set_unit
 end
 
 open Syntax
-
-let _set_vec4 : type a b. (a, b) t -> int -> (a, b) Vec4.t -> (a, b) t =
- fun mat idx vec ->
-  let res = Genarray.create (Genarray.kind mat) c_layout [| 4; 4 |] in
-  Genarray.blit mat res;
-  let slice = Genarray.slice_left res [| idx |] in
-  let gvec = Vec4.as_genarray vec in
-  Genarray.blit gvec slice;
-  res
-
-let _set_vec4' : type a b. (a, b) t -> int -> (a, b) Vec4.t -> unit =
- fun mat idx vec ->
-  let slice = Genarray.slice_left mat [| idx |] in
-  let gvec = Vec4.as_genarray vec in
-  Genarray.blit gvec slice
-
-let _set_vec3 : type a b. (a, b) t -> int -> (a, b) Vec3.t -> (a, b) t =
- fun mat idx vec ->
-  let res = Genarray.create (Genarray.kind mat) c_layout [| 4; 4 |] in
-  Genarray.blit mat res;
-  let slice = Genarray.slice_left res [| idx |] in
-  let sub = Genarray.sub_left slice 0 3 in
-  let gvec = Vec3.as_genarray vec in
-  Genarray.blit gvec sub;
-  res
-
-let _set_vec2 : type a b. (a, b) t -> int -> (a, b) Vec2.t -> (a, b) t =
- fun mat idx vec ->
-  let res = Genarray.create (Genarray.kind mat) c_layout [| 4; 4 |] in
-  Genarray.blit mat res;
-  let slice = Genarray.slice_left res [| idx |] in
-  let sub = Genarray.sub_left slice 0 2 in
-  let gvec = Vec2.as_genarray vec in
-  Genarray.blit gvec sub;
-  res
 
 let ortho : type a b. (a, b) Base.elt -> a -> a -> a -> a -> (a, b) t =
  fun elt left right bottom top ->
@@ -144,7 +157,7 @@ let ortho : type a b. (a, b) Base.elt -> a -> a -> a -> a -> (a, b) t =
   let ( ~- ) = Base.neg elt in
   let ( / ) = Base.div elt in
   let two = Base.one elt + Base.one elt in
-  let m = ones elt in
+  let m = id elt in
   m.![0, 0] <- two / (right - left);
   m.![1, 1] <- two / (top - bottom);
   m.![2, 2] <- ~-(Base.one elt);
@@ -160,13 +173,13 @@ let ortho_near_far : type a b. (a, b) Base.elt -> a -> a -> a -> a -> a -> a -> 
   let ( / ) = Base.div elt in
   let one = Base.one elt in
   let two = one + one in
-  let m = ones elt in
+  let m = id elt in
   m.![0, 0] <- two / (right - left);
   m.![1, 1] <- two / (top - bottom);
-  m.![2, 2] <- one / (far - near);
+  m.![2, 2] <- ~- two / (far - near);
   m.![3, 0] <- ~-(right + left) / (right - left);
   m.![3, 1] <- ~-(top + bottom) / (top - bottom);
-  m.![3, 2] <- ~-near / (far - near);
+  m.![3, 2] <- ~-(far + near) / (far - near);
   m
 
 let translate : type a b. (a, b) t -> (a, b) Vec3.t -> (a, b) t =
@@ -271,10 +284,10 @@ let inverse : type a b. (a, b) t -> (a, b) t =
   let vec2 = Vec4.of_scalars elt m.![1, 2] m.![0, 2] m.![0, 2] m.![0, 2] in
   let vec3 = Vec4.of_scalars elt m.![1, 3] m.![0, 3] m.![0, 3] m.![0, 3] in
   let open Vec4.Syntax in
-  let inv0 = vec1 ^*^ fac0 ^-^ vec2 ^*^ fac1 ^+^ vec3 ^*^ fac2 in
-  let inv1 = vec0 ^*^ fac0 ^-^ vec2 ^*^ fac3 ^+^ vec3 ^*^ fac4 in
-  let inv2 = vec0 ^*^ fac1 ^-^ vec1 ^*^ fac3 ^+^ vec3 ^*^ fac5 in
-  let inv3 = vec0 ^*^ fac2 ^-^ vec1 ^*^ fac4 ^+^ vec2 ^*^ fac5 in
+  let inv0 = (vec1 ^*^ fac0) ^-^ (vec2 ^*^ fac1) ^+^ (vec3 ^*^ fac2) in
+  let inv1 = (vec0 ^*^ fac0) ^-^ (vec2 ^*^ fac3) ^+^ (vec3 ^*^ fac4) in
+  let inv2 = (vec0 ^*^ fac1) ^-^ (vec1 ^*^ fac3) ^+^ (vec3 ^*^ fac5) in
+  let inv3 = (vec0 ^*^ fac2) ^-^ (vec1 ^*^ fac4) ^+^ (vec2 ^*^ fac5) in
   let one = Base.one elt in
   let neg = Base.neg elt in
   let neg_one = neg one in
@@ -286,10 +299,10 @@ let inverse : type a b. (a, b) t -> (a, b) t =
   _set_vec4' inverse 2 (inv2 ^*^ signa);
   _set_vec4' inverse 3 (inv3 ^*^ signb);
   let row0 = Vec4.of_scalars elt inverse.![0, 0] inverse.![1, 0] inverse.![2, 0] inverse.![3, 0] in
-  let dot0 = get_col m 0 ^*^ row0 in
+  let dot0 = (get_col m 0) ^*^ row0 in
   let dot1 = dot0.^[0] + dot0.^[1] + (dot0.^[2] + dot0.^[3]) in
   let one_over_determinant = one / dot1 in
-  one_over_determinant *! inverse
+  scalar_mul one_over_determinant inverse
 
 let start : type a b. (a, b) t -> a Ctypes.ptr =
  fun mat -> Ctypes.bigarray_start Ctypes.genarray mat

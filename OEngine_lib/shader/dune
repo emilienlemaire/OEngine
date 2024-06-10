@@ -1,0 +1,4 @@
+(library
+  (name shader)
+  (virtual_modules shader)
+  (libraries core math))

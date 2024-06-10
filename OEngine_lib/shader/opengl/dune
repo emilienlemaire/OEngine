@@ -1,0 +1,4 @@
+(library
+  (name shader_opengl)
+  (implements shader)
+  (libraries core gl math))

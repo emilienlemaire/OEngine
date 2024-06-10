@@ -15,7 +15,7 @@ module Layer = Layer.Make (struct
 
   let vertex_shader_source =
     {|
-#version 460
+#version 330 core
 layout (location = 0) in vec3 a_Position;
 layout (location = 1) in vec4 a_Color;
 
@@ -33,7 +33,7 @@ void main()
 
   let fragment_shader_source =
     {|
-#version 460
+#version 330 core
 
 layout (location = 0) out vec4 color;
 
@@ -48,7 +48,7 @@ void main()
 
   let blue_vertex_source =
     {|
-#version 460
+#version 330 core
 
 layout (location = 0) in vec3 a_Position;
 
@@ -64,7 +64,7 @@ void main() {
 
   let blue_fragment_source =
     {|
-#version 460
+#version 330 core
 
 layout (location = 0) out vec4 color;
 
@@ -143,15 +143,14 @@ void main() {
     let* r = Renderer.clear r in
     let c =
       Renderer.Orthographic_camera.set_position
-        (Vec3.of_scalars Base.Float32_elt 0.5 0.5 0.)
+        (Vec3.of_scalars Base.Float32_elt 0.5 0.4 0.)
         s.camera
       |> Renderer.Orthographic_camera.set_rotation 45.
     in
     let* r = Renderer.begin_scene c r in
     let* r = Renderer.submit (Option.get s.square_vertex_array) s.blue_shader r in
-    let* _ = Shader.bind s.shader in
     let* _ = Renderer.submit (Option.get s.vertex_array) s.shader r in
-    ok s
+    ok { s with camera = c }
 
   let detach s =
     let* _ = Shader.finalize s.shader in

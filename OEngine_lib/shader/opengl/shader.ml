@@ -59,11 +59,12 @@ let upload_uniform_mat4 name mat s =
   Gl.uniform_matrix_4fv location 1 false (Mat4x4.start mat)
 
 let finalize s =
-  let* _ =
+  let+ _ =
     List.fold_left
       (fun acc (_, sid) ->
         let* _acc = acc in
         Gl.delete_shader sid )
       (ok ()) s.shaders
   in
-  ok { s with shaders = [] }
+  ()
+

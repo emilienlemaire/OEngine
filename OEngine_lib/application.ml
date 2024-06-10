@@ -117,7 +117,7 @@ let make (module FirstLayer : Layer.APPLICATION_LAYER) =
   Glfw.(Window.window_hint Window.Context_version_major 4);
   Glfw.(Window.window_hint Window.Context_version_minor 6);
   Glfw.(Window.window_hint Window.Opengl_profile Window.Core);
-  let window = Glfw.Window.make ~width:1920 ~height:1080 ~title:"GLFW Window" () in
+  let window = Glfw.Window.make ~width:1600 ~height:900 ~title:"GLFW Window" () in
   let* glfw =
     Glfw.make_current_context window glfw
     >>= Glfw.set_key_callback key_callback

@@ -31,7 +31,7 @@ let begin_scene c s =
 let submit va sh s =
   let* _ = Shader.bind sh in
   let* _ =
-    Shader.upload_uniform_mat4 "u_ViewProjectionMatrix" s.scene_data.view_projection_matrix sh
+    Shader.upload_uniform_mat4 "u_ViewProjection" s.scene_data.view_projection_matrix sh
   in
   let* _ = Vertex_array.bind va in
   let* count = Vertex_array.index_count va in

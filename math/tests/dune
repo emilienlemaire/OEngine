@@ -1,0 +1,5 @@
+(library
+  (name test_mat_mul)
+  (libraries math)
+  (inline_tests)
+  (preprocess (pps ppx_expect)))

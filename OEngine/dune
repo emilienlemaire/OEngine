@@ -6,4 +6,5 @@
   renderer_opengl
   vertex_buffer_opengl
   index_buffer_opengl
-  vertex_array_opengl))
+  vertex_array_opengl
+  shader_opengl))
