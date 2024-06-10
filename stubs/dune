@@ -1,4 +1,5 @@
 (library
  (name stubs)
+ (public_name OEngine_stubs)
  (private_modules private)
  (libraries bindings generated constants))

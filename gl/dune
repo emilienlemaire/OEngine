@@ -1,3 +1,4 @@
 (library
  (name gl)
- (libraries core ctypes stubs))
+ (public_name gl)
+ (libraries OEngine_core ctypes OEngine_stubs))

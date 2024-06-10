@@ -1,4 +1,5 @@
 (library
  (name vertex_array)
  (virtual_modules vertex_array)
+ (package OEngine_lib)
  (libraries core buffer))

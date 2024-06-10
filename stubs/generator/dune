@@ -31,6 +31,7 @@
 
 (library
  (name generated)
+ (package OEngine_stubs)
  (modules generated)
  (foreign_stubs
   (language c)
@@ -41,5 +42,6 @@
 
 (library
  (name constants)
+ (package OEngine_stubs)
  (modules constants)
  (libraries ctypes.stubs))

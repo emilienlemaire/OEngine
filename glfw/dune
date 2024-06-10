@@ -1,5 +1,6 @@
 (library
  (name glfw)
+ (public_name glfw)
  (libraries stubs core)
  (preprocess
   (pps ppx_deriving.show)))

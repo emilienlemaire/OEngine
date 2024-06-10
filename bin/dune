@@ -1,5 +1,6 @@
 (executable
  (public_name OEngine)
+ (package OEngine)
  (name OEngine)
  (libraries
   OEngine_lib

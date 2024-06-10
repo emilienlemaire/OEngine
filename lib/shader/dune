@@ -1,4 +1,5 @@
 (library
   (name shader)
   (virtual_modules shader)
+  (package OEngine_lib)
   (libraries core math))

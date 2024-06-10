@@ -1,3 +1,4 @@
 (library
  (name math)
+ (public_name math)
  (libraries ctypes))

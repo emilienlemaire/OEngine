@@ -1,4 +1,5 @@
 (library
  (name vertex_array_opengl)
+ (package OEngine_lib)
  (implements vertex_array)
  (libraries core gl buffer index_buffer_opengl vertex_buffer_opengl))

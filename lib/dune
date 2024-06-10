@@ -1,21 +1,25 @@
 (library
  (name layer)
  (modules layer)
+ (package OEngine_lib)
  (libraries core events))
 
 (library
  (name dequeue)
  (modules dequeue)
+ (package OEngine_lib)
  (libraries core))
 
 (library
  (name events)
  (modules events)
+ (package OEngine_lib)
  (libraries glfw core))
 
 (library
  (name application)
  (modules application)
+ (package OEngine_lib)
  (libraries
   core
   glfw
@@ -31,6 +35,7 @@
 
 (library
  (name OEngine_lib)
+ (public_name OEngine_lib)
  (modules)
  (libraries
   (re_export application)
