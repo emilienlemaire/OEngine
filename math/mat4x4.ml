@@ -62,7 +62,6 @@ let get_col : type a b. (a, b) t -> int -> (a, b) Vec4.t =
   let slice = Genarray.slice_left mat [| i |] in
   Vec4.of_genarray slice
 
-
 let id elt =
   let arr = array2_of_genarray @@ zeros elt in
   let one = Base.one elt in
@@ -104,43 +103,43 @@ let div : type a b. (a, b) mat_op = fun m1 m2 -> _mat_member_op Base.div m1 m2
 
 let mul : type a b. (a, b) mat_op =
  fun m1 m2 ->
-   let elt = Base.elt_of_kind (Genarray.kind m1) in
-   let src_a0 = get_col m1 0 in
-   let src_a1 = get_col m1 1 in
-   let src_a2 = get_col m1 2 in
-   let src_a3 = get_col m1 3 in
+  let elt = Base.elt_of_kind (Genarray.kind m1) in
+  let src_a0 = get_col m1 0 in
+  let src_a1 = get_col m1 1 in
+  let src_a2 = get_col m1 2 in
+  let src_a3 = get_col m1 3 in
 
-   let src_b0 = get_col m2 0 in
-   let src_b1 = get_col m2 1 in
-   let src_b2 = get_col m2 2 in
-   let src_b3 = get_col m2 3 in
+  let src_b0 = get_col m2 0 in
+  let src_b1 = get_col m2 1 in
+  let src_b2 = get_col m2 2 in
+  let src_b3 = get_col m2 3 in
 
-   let res = empty elt in
+  let res = empty elt in
   (*  *)
-   let tmp = Vec4.scalar_mul (Vec4.x src_b0) src_a0 in
-   let tmp = Vec4.add tmp (Vec4.scalar_mul (Vec4.y src_b0) src_a1) in
-   let tmp = Vec4.add tmp (Vec4.scalar_mul (Vec4.z src_b0) src_a2) in
-   let tmp = Vec4.add tmp (Vec4.scalar_mul (Vec4.w src_b0) src_a3) in
-   let res = _set_vec4 res 0 tmp in
+  let tmp = Vec4.scalar_mul (Vec4.x src_b0) src_a0 in
+  let tmp = Vec4.add tmp (Vec4.scalar_mul (Vec4.y src_b0) src_a1) in
+  let tmp = Vec4.add tmp (Vec4.scalar_mul (Vec4.z src_b0) src_a2) in
+  let tmp = Vec4.add tmp (Vec4.scalar_mul (Vec4.w src_b0) src_a3) in
+  let res = _set_vec4 res 0 tmp in
 
-   let tmp = Vec4.scalar_mul (Vec4.x src_b1) src_a0 in
-   let tmp = Vec4.add tmp (Vec4.scalar_mul (Vec4.y src_b1) src_a1) in
-   let tmp = Vec4.add tmp (Vec4.scalar_mul (Vec4.z src_b1) src_a2) in
-   let tmp = Vec4.add tmp (Vec4.scalar_mul (Vec4.w src_b1) src_a3) in
-   let res = _set_vec4 res 1 tmp in
+  let tmp = Vec4.scalar_mul (Vec4.x src_b1) src_a0 in
+  let tmp = Vec4.add tmp (Vec4.scalar_mul (Vec4.y src_b1) src_a1) in
+  let tmp = Vec4.add tmp (Vec4.scalar_mul (Vec4.z src_b1) src_a2) in
+  let tmp = Vec4.add tmp (Vec4.scalar_mul (Vec4.w src_b1) src_a3) in
+  let res = _set_vec4 res 1 tmp in
 
-   let tmp = Vec4.scalar_mul (Vec4.x src_b2) src_a0 in
-   let tmp = Vec4.add tmp (Vec4.scalar_mul (Vec4.y src_b2) src_a1) in
-   let tmp = Vec4.add tmp (Vec4.scalar_mul (Vec4.z src_b2) src_a2) in
-   let tmp = Vec4.add tmp (Vec4.scalar_mul (Vec4.w src_b2) src_a3) in
-   let res = _set_vec4 res 2 tmp in
+  let tmp = Vec4.scalar_mul (Vec4.x src_b2) src_a0 in
+  let tmp = Vec4.add tmp (Vec4.scalar_mul (Vec4.y src_b2) src_a1) in
+  let tmp = Vec4.add tmp (Vec4.scalar_mul (Vec4.z src_b2) src_a2) in
+  let tmp = Vec4.add tmp (Vec4.scalar_mul (Vec4.w src_b2) src_a3) in
+  let res = _set_vec4 res 2 tmp in
 
-   let tmp = Vec4.scalar_mul (Vec4.x src_b3) src_a0 in
-   let tmp = Vec4.add tmp (Vec4.scalar_mul (Vec4.y src_b3) src_a1) in
-   let tmp = Vec4.add tmp (Vec4.scalar_mul (Vec4.z src_b3) src_a2) in
-   let tmp = Vec4.add tmp (Vec4.scalar_mul (Vec4.w src_b3) src_a3) in
-   let res = _set_vec4 res 3 tmp in
-   res
+  let tmp = Vec4.scalar_mul (Vec4.x src_b3) src_a0 in
+  let tmp = Vec4.add tmp (Vec4.scalar_mul (Vec4.y src_b3) src_a1) in
+  let tmp = Vec4.add tmp (Vec4.scalar_mul (Vec4.z src_b3) src_a2) in
+  let tmp = Vec4.add tmp (Vec4.scalar_mul (Vec4.w src_b3) src_a3) in
+  let res = _set_vec4 res 3 tmp in
+  res
 
 module Syntax = struct
   let ( .![] ) = get
@@ -176,7 +175,7 @@ let ortho_near_far : type a b. (a, b) Base.elt -> a -> a -> a -> a -> a -> a -> 
   let m = id elt in
   m.![0, 0] <- two / (right - left);
   m.![1, 1] <- two / (top - bottom);
-  m.![2, 2] <- ~- two / (far - near);
+  m.![2, 2] <- ~-two / (far - near);
   m.![3, 0] <- ~-(right + left) / (right - left);
   m.![3, 1] <- ~-(top + bottom) / (top - bottom);
   m.![3, 2] <- ~-(far + near) / (far - near);
@@ -284,10 +283,10 @@ let inverse : type a b. (a, b) t -> (a, b) t =
   let vec2 = Vec4.of_scalars elt m.![1, 2] m.![0, 2] m.![0, 2] m.![0, 2] in
   let vec3 = Vec4.of_scalars elt m.![1, 3] m.![0, 3] m.![0, 3] m.![0, 3] in
   let open Vec4.Syntax in
-  let inv0 = (vec1 ^*^ fac0) ^-^ (vec2 ^*^ fac1) ^+^ (vec3 ^*^ fac2) in
-  let inv1 = (vec0 ^*^ fac0) ^-^ (vec2 ^*^ fac3) ^+^ (vec3 ^*^ fac4) in
-  let inv2 = (vec0 ^*^ fac1) ^-^ (vec1 ^*^ fac3) ^+^ (vec3 ^*^ fac5) in
-  let inv3 = (vec0 ^*^ fac2) ^-^ (vec1 ^*^ fac4) ^+^ (vec2 ^*^ fac5) in
+  let inv0 = (vec1 ^*^ fac0) ^-^ (vec2 ^*^ fac1) ^+^ vec3 ^*^ fac2 in
+  let inv1 = (vec0 ^*^ fac0) ^-^ (vec2 ^*^ fac3) ^+^ vec3 ^*^ fac4 in
+  let inv2 = (vec0 ^*^ fac1) ^-^ (vec1 ^*^ fac3) ^+^ vec3 ^*^ fac5 in
+  let inv3 = (vec0 ^*^ fac2) ^-^ (vec1 ^*^ fac4) ^+^ vec2 ^*^ fac5 in
   let one = Base.one elt in
   let neg = Base.neg elt in
   let neg_one = neg one in
@@ -299,7 +298,7 @@ let inverse : type a b. (a, b) t -> (a, b) t =
   _set_vec4' inverse 2 (inv2 ^*^ signa);
   _set_vec4' inverse 3 (inv3 ^*^ signb);
   let row0 = Vec4.of_scalars elt inverse.![0, 0] inverse.![1, 0] inverse.![2, 0] inverse.![3, 0] in
-  let dot0 = (get_col m 0) ^*^ row0 in
+  let dot0 = get_col m 0 ^*^ row0 in
   let dot1 = dot0.^[0] + dot0.^[1] + (dot0.^[2] + dot0.^[3]) in
   let one_over_determinant = one / dot1 in
   scalar_mul one_over_determinant inverse

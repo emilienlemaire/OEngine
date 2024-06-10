@@ -51,80 +51,98 @@ let iter_event s e =
 
 (* to disable the GC on this functions *)
 let window_size_cb = ref None
+
 let window_close_cb = ref None
+
 let key_cb = ref None
+
 let mouse_button_cb = ref None
+
 let scroll_cb = ref None
+
 let cursor_pos_cb = ref None
 
 let make_current_context window state =
   Glfw.make_context_current (Window.as_ptr window);
   let state = { state with current_context = Some window } in
   let _f =
-    window_size_cb := Some (fun ptr width height ->
-        let usr_ptr : t = Ctypes.Root.get @@ Glfw.get_window_user_pointer ptr in
-        let event = Events.create @@ WindowResize (WindowResize.create ~width ~height) in
-        iter_event usr_ptr event );
-    Glfw.set_window_size_callback (Window.as_ptr window) @@ Option.get (!window_size_cb)  in
+    window_size_cb :=
+      Some
+        (fun ptr width height ->
+          let usr_ptr : t = Ctypes.Root.get @@ Glfw.get_window_user_pointer ptr in
+          let event = Events.create @@ WindowResize (WindowResize.create ~width ~height) in
+          iter_event usr_ptr event );
+    Glfw.set_window_size_callback (Window.as_ptr window) @@ Option.get !window_size_cb
+  in
   let _f =
-    window_close_cb := Some (fun ptr ->
-        let usr_ptr : t = Ctypes.Root.get @@ Glfw.get_window_user_pointer ptr in
-        let event = Events.create @@ WindowClose (WindowClose.create ()) in
-        iter_event usr_ptr event );
+    window_close_cb :=
+      Some
+        (fun ptr ->
+          let usr_ptr : t = Ctypes.Root.get @@ Glfw.get_window_user_pointer ptr in
+          let event = Events.create @@ WindowClose (WindowClose.create ()) in
+          iter_event usr_ptr event );
     Glfw.set_window_close_callback (Window.as_ptr window) (Option.get !window_close_cb)
   in
   let _f =
-    key_cb := Some (fun ptr key scancode action mods ->
-        let usr_ptr : t = Ctypes.Root.get @@ Stubs.Glfw.get_window_user_pointer ptr in
-        let event =
-          match Actions.of_glfw action with
-          | Actions.PRESS ->
-            KeyPressed
-              (KeyPressed.create ~key:(Keys.of_glfw key) ~modifiers:(ModifierKeys.of_many mods))
-          | RELEASE ->
-            KeyReleased
-              (KeyReleased.create ~key:(Keys.of_glfw key) ~modifiers:(ModifierKeys.of_many mods))
-          | REPEAT ->
-            KeyRepeated
-              (KeyRepeated.create ~key:(Keys.of_glfw key) ~modifiers:(ModifierKeys.of_many mods))
-        in
-        iter_event usr_ptr (Events.create event);
-        match usr_ptr.key_cb with
-        | Some cb ->
-          cb usr_ptr (Keys.of_glfw key) scancode (Actions.of_glfw action)
-            (ModifierKeys.of_many mods)
-        | None -> () );
+    key_cb :=
+      Some
+        (fun ptr key scancode action mods ->
+          let usr_ptr : t = Ctypes.Root.get @@ Stubs.Glfw.get_window_user_pointer ptr in
+          let event =
+            match Actions.of_glfw action with
+            | Actions.PRESS ->
+              KeyPressed
+                (KeyPressed.create ~key:(Keys.of_glfw key) ~modifiers:(ModifierKeys.of_many mods))
+            | RELEASE ->
+              KeyReleased
+                (KeyReleased.create ~key:(Keys.of_glfw key) ~modifiers:(ModifierKeys.of_many mods))
+            | REPEAT ->
+              KeyRepeated
+                (KeyRepeated.create ~key:(Keys.of_glfw key) ~modifiers:(ModifierKeys.of_many mods))
+          in
+          iter_event usr_ptr (Events.create event);
+          match usr_ptr.key_cb with
+          | Some cb ->
+            cb usr_ptr (Keys.of_glfw key) scancode (Actions.of_glfw action)
+              (ModifierKeys.of_many mods)
+          | None -> () );
     Glfw.set_key_callback (Window.as_ptr window) (Option.get !key_cb)
   in
   let _f =
-    mouse_button_cb := Some (fun ptr button action mods ->
-        let usr_ptr : t = Ctypes.Root.get @@ Glfw.get_window_user_pointer ptr in
-        let event =
-          match Actions.of_glfw action with
-          | Actions.PRESS | REPEAT ->
-            MouseButtonPressed
-              (MouseButtonPressed.create ~button:(MouseButtons.of_glfw button)
-                 ~modifiers:(ModifierKeys.of_many mods) )
-          | RELEASE ->
-            MouseButtonReleased
-              (MouseButtonReleased.create ~button:(MouseButtons.of_glfw button)
-                 ~modifiers:(ModifierKeys.of_many mods) )
-        in
-        iter_event usr_ptr (Events.create event) );
+    mouse_button_cb :=
+      Some
+        (fun ptr button action mods ->
+          let usr_ptr : t = Ctypes.Root.get @@ Glfw.get_window_user_pointer ptr in
+          let event =
+            match Actions.of_glfw action with
+            | Actions.PRESS | REPEAT ->
+              MouseButtonPressed
+                (MouseButtonPressed.create ~button:(MouseButtons.of_glfw button)
+                   ~modifiers:(ModifierKeys.of_many mods) )
+            | RELEASE ->
+              MouseButtonReleased
+                (MouseButtonReleased.create ~button:(MouseButtons.of_glfw button)
+                   ~modifiers:(ModifierKeys.of_many mods) )
+          in
+          iter_event usr_ptr (Events.create event) );
     Glfw.set_mouse_button_callback (Window.as_ptr window) (Option.get !mouse_button_cb)
   in
   let _f =
-    scroll_cb := Some (fun ptr x_offset y_offset ->
-        let usr_ptr : t = Ctypes.Root.get @@ Glfw.get_window_user_pointer ptr in
-        let event = Events.create @@ MouseScrolled (MouseScrolled.create ~x_offset ~y_offset) in
-        iter_event usr_ptr event );
+    scroll_cb :=
+      Some
+        (fun ptr x_offset y_offset ->
+          let usr_ptr : t = Ctypes.Root.get @@ Glfw.get_window_user_pointer ptr in
+          let event = Events.create @@ MouseScrolled (MouseScrolled.create ~x_offset ~y_offset) in
+          iter_event usr_ptr event );
     Glfw.set_scroll_callback (Window.as_ptr window) (Option.get !scroll_cb)
   in
   let _f =
-    cursor_pos_cb := Some (fun ptr x y ->
-        let usr_ptr : t = Ctypes.Root.get @@ Glfw.get_window_user_pointer ptr in
-        let event = Events.create @@ MouseMoved (MouseMoved.create ~x ~y) in
-        iter_event usr_ptr event );
+    cursor_pos_cb :=
+      Some
+        (fun ptr x y ->
+          let usr_ptr : t = Ctypes.Root.get @@ Glfw.get_window_user_pointer ptr in
+          let event = Events.create @@ MouseMoved (MouseMoved.create ~x ~y) in
+          iter_event usr_ptr event );
     Glfw.set_cursor_pos_callback (Window.as_ptr window) (Option.get !cursor_pos_cb)
   in
   Glfw.set_window_user_pointer (Window.as_ptr window) @@ Ctypes.Root.create state;
@@ -201,6 +219,14 @@ let swap_buffers s =
     Stubs.Glfw.swap_buffers (Window.as_ptr c);
     ok s
   | None -> no_context __FUNCTION__
+
+let get_key key s =
+  match s.current_context with
+  | Some c ->
+      let key_num = Events.Keys.to_glfw key in
+      let ptr = Window.as_ptr c in
+      ok @@ Events.Actions.of_glfw (Stubs.Glfw.get_key ptr key_num)
+  | None -> error (No_context __FUNCTION__)
 
 let poll_events s =
   Glfw.poll_events ();

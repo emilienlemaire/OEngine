@@ -1,6 +1,12 @@
 open Core.Syntax.Result
 open Result
 open Math
+open Application
+
+module Logger = Logger.Make (struct
+  let fmt = Format.std_formatter
+  let name = "Main"
+end)
 
 module Layer = Layer.Make (struct
   type t =
@@ -13,9 +19,11 @@ module Layer = Layer.Make (struct
       camera : Renderer.Orthographic_camera.t
     }
 
+  let name = "Main"
+
   let vertex_shader_source =
     {|
-#version 330 core
+#version 460 core
 layout (location = 0) in vec3 a_Position;
 layout (location = 1) in vec4 a_Color;
 
@@ -33,7 +41,7 @@ void main()
 
   let fragment_shader_source =
     {|
-#version 330 core
+#version 460 core
 
 layout (location = 0) out vec4 color;
 
@@ -48,7 +56,7 @@ void main()
 
   let blue_vertex_source =
     {|
-#version 330 core
+#version 460 core
 
 layout (location = 0) in vec3 a_Position;
 
@@ -64,7 +72,7 @@ void main() {
 
   let blue_fragment_source =
     {|
-#version 330 core
+#version 460 core
 
 layout (location = 0) out vec4 color;
 
@@ -138,7 +146,11 @@ void main() {
         square_vertex_array = Some square_vertex_array
       }
 
-  let update s =
+  let update _ts app s =
+    let glfw = Application.glfw app in
+    let* pressed_w = Events.Input.is_key_pressed glfw Events.Keys.W in
+    if pressed_w then
+      Logger.printf Logger.Info "W key pressed@\n";
     let* r = Renderer.set_clear_color 0.1 0.1 0.1 1.0 s.renderer in
     let* r = Renderer.clear r in
     let c =
@@ -158,7 +170,7 @@ void main() {
     ok ()
 
   let event e s =
-    Format.printf "Layer got event: %a@\n" (Glfw.Events.pp_event Glfw.Events.pp) e;
+    Logger.printf Logger.Info "Event: %a@\n" (Glfw.Events.pp_event Glfw.Events.pp) e;
     Format.pp_print_flush Format.std_formatter ();
     ok (e, s)
 end)
@@ -169,9 +181,10 @@ let () =
   | Ok app ->
     ( match Application.run app with
     | Ok _ ->
-      Format.printf "Application finished normally";
+      Logger.printf Logger.Info "Application finished normally";
       ()
     | Error err ->
-      Format.printf "Application finished with errors:@\n%a" Core.Error.pp_error_kind err;
+      Logger.printf Logger.Info "Application finished with errors:@\n%a" Core.Error.pp_error_kind err;
       () )
-  | Error err -> Format.printf "Application could not be created:@\n%a" Core.Error.pp_error_kind err
+  | Error err -> Logger.printf Logger.Error "Application could not be created:@\n%a" Core.Error.pp_error_kind err
+

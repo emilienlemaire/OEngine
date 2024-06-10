@@ -67,4 +67,3 @@ let finalize s =
       (ok ()) s.shaders
   in
   ()
-

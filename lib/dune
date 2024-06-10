@@ -1,8 +1,9 @@
 (library
- (name layer)
- (modules layer)
- (package OEngine_lib)
- (libraries core events))
+  (name logger)
+  (modules logger)
+  (package OEngine_lib)
+  (preprocess (pps ppx_deriving.show))
+  (libraries core fmt))
 
 (library
  (name dequeue)
@@ -27,7 +28,6 @@
   shader
   events
   dequeue
-  layer
   buffer
   imguiml
   imguiml.imguiml_impl
@@ -42,6 +42,6 @@
   (re_export vertex_array)
   (re_export shader)
   (re_export events)
-  (re_export layer)
   (re_export buffer)
-  (re_export renderer)))
+  (re_export renderer)
+  (re_export logger)))

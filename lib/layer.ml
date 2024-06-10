@@ -7,7 +7,7 @@ module type APPLICATION_LAYER = sig
 
   val attach : unit -> unit Core.Error.t
 
-  val update : unit -> unit Core.Error.t
+  val update : float -> unit Core.Error.t
 
   val detach : unit -> unit Core.Error.t
 
@@ -20,9 +20,13 @@ module type LAYER = sig
 
   val create : unit -> t
 
+  (** @param state The state of the layer after creation and before attachment to the application.
+      @return The state of the layer after attachment to the application. *)
   val attach : t -> t Core.Error.t
 
-  val update : t -> t Core.Error.t
+  (** @param timestep Current frame time step
+      @param state Current frame layer state *)
+  val update : float -> t -> t Core.Error.t
 
   val detach : t -> unit Core.Error.t
 
@@ -32,32 +36,3 @@ module type LAYER = sig
     (Events.any_event Events.t Events.event * t) Core.Error.t
 end
 
-let id = ref 0
-
-let get_new_id () =
-  let new_id = !id in
-  incr id;
-  new_id
-
-module Make (Layer : LAYER) : APPLICATION_LAYER = struct
-  type t = Layer.t
-
-  let state : t ref = ref (Layer.create ())
-
-  let id = get_new_id ()
-
-  let attach () =
-    let+ s = Layer.attach !state in
-    state := s
-
-  let update () =
-    let+ s = Layer.update !state in
-    state := s
-
-  let detach () = Layer.detach !state
-
-  let event e =
-    let+ e, s = Layer.event e !state in
-    state := s;
-    e
-end

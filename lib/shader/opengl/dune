@@ -1,5 +1,5 @@
 (library
-  (name shader_opengl)
-  (package OEngine_lib)
-  (implements shader)
-  (libraries core gl math))
+ (name shader_opengl)
+ (package OEngine_lib)
+ (implements shader)
+ (libraries core gl math))

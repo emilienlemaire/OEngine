@@ -35,6 +35,8 @@ val swap_interval : t -> int
 
 val get_time : unit -> float
 
+val get_key : Events.Keys.t -> t -> Events.Actions.t Core.Error.t
+
 val push_layer_event_cb :
   (Events.any_event Events.t Events.event -> Events.any_event Events.t Events.event Core.Error.t) ->
   int ->

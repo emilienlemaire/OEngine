@@ -87,7 +87,8 @@ let%expect_test "rotate" =
       (Vec3.of_scalars Base.Float32_elt 0. 0. 1.)
   in
   Format.printf "%a@\n" pp_mat4 m;
-  [%expect {|
+  [%expect
+    {|
     [0.707107 0.707107 0.000000 0.000000
      -0.707107 0.707107 0.000000 0.000000
      0.000000 0.000000 1.000000 0.000000
@@ -95,7 +96,7 @@ let%expect_test "rotate" =
     |}]
 
 let%expect_test "transform" =
-  let trans = 
+  let trans =
     Mat4x4.translate (Mat4x4.id Base.Float32_elt) (Vec3.of_scalars Base.Float32_elt 0.5 0.5 0.)
   in
   let rot =
@@ -104,7 +105,8 @@ let%expect_test "transform" =
   in
   let m = Mat4x4.mul trans rot in
   Format.printf "%a@\n" pp_mat4 m;
-  [%expect {|
+  [%expect
+    {|
     [0.707107 0.707107 0.000000 0.000000
      -0.707107 0.707107 0.000000 0.000000
      0.000000 0.000000 1.000000 0.000000
@@ -122,7 +124,8 @@ let%expect_test "view_matrix" =
   let tranform = Mat4x4.mul trans rot in
   let res = Mat4x4.inverse tranform in
   Format.printf "%a@\n" pp_mat4 res;
-  [%expect {|
+  [%expect
+    {|
     [0.707107 -0.707107 0.000000 -0.000000
      0.707107 0.707107 -0.000000 0.000000
      -0.000000 -0.000000 1.000000 -0.000000
@@ -130,21 +133,22 @@ let%expect_test "view_matrix" =
     |}]
 
 let%expect_test "view_projection_matrix" =
-  let projection_matrix =  Mat4x4.ortho_near_far Base.Float32_elt (-1.6) 1.6 (-0.9) (0.9) (-1.) 1. in
+  let projection_matrix = Mat4x4.ortho_near_far Base.Float32_elt (-1.6) 1.6 (-0.9) 0.9 (-1.) 1. in
   let rotation = 45. in
   let position = Vec3.of_scalars Base.Float32_elt 0.5 0.5 0. in
   let transform =
-    Mat4x4.mul (Mat4x4.translate (Mat4x4.id Base.Float32_elt) position)
-               (Mat4x4.rotate (Mat4x4.id Base.Float32_elt) (Base.radians rotation)
-                  (Vec3.of_scalars Base.Float32_elt 0. 0. 1.))
+    Mat4x4.mul
+      (Mat4x4.translate (Mat4x4.id Base.Float32_elt) position)
+      (Mat4x4.rotate (Mat4x4.id Base.Float32_elt) (Base.radians rotation)
+         (Vec3.of_scalars Base.Float32_elt 0. 0. 1.) )
   in
   let view_matrix = Mat4x4.inverse transform in
   let view_projection_matrix = Mat4x4.mul projection_matrix view_matrix in
   Format.printf "%a@\n" pp_mat4 view_projection_matrix;
-  [%expect {|
+  [%expect
+    {|
     [0.441942 -0.785674 0.000000 0.000000
      0.441942 0.785674 0.000000 0.000000
      0.000000 0.000000 -1.000000 0.000000
      -0.441942 0.000000 0.000000 1.000000]
     |}]
-

@@ -19,4 +19,3 @@ val unbind : t -> unit Core.Error.t
 val upload_uniform_mat4 : string -> (float, 'a) Math.Mat4x4.t -> t -> unit Core.Error.t
 
 val finalize : t -> unit Core.Error.t
-

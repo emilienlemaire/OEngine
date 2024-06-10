@@ -742,6 +742,9 @@ module Bindings (F : Ctypes.FOREIGN) = struct
     (* 4534 *)
     let poll_events = foreign "glfwPollEvents" (void @-> returning void)
 
+    (* 4901 *)
+    let get_key = foreign "glfwGetKey" (ptr window @-> int @-> returning int)
+
     (* 5198 *)
     let set_key_callback =
       foreign "glfwSetKeyCallback" (ptr window @-> key_fun @-> returning key_fun)
