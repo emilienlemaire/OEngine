@@ -67,7 +67,7 @@ module Syntax : sig
 
   val ( ^/ ) : ('a, 'b) t -> 'a -> ('a, 'b) t
 
-  val ( .^[] ) : ('a, 'b) t -> int -> 'a
+  val ( .^{} ) : ('a, 'b) t -> int -> 'a
 
-  val ( .^[]<- ) : ('a, 'b) t -> int -> 'a -> unit
+  val ( .^{}<- ) : ('a, 'b) t -> int -> 'a -> unit
 end

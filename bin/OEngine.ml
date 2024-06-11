@@ -16,7 +16,11 @@ module Layer = Layer.Make (struct
       vertex_array : Vertex_array.t option;
       vertex_buffer : Buffer.VertexBuffer.t option; [@warning "-69"]
       square_vertex_array : Vertex_array.t option;
-      camera : Renderer.Orthographic_camera.t
+      camera : Renderer.Orthographic_camera.t;
+      camera_position: (float, Bigarray.float32_elt) Vec3.t;
+      camera_move_speed: float;
+      camera_rotation: float;
+      camera_rotation_speed: float;
     }
 
   let name = "Main"
@@ -92,7 +96,11 @@ void main() {
       vertex_buffer = None;
       vertex_array = None;
       square_vertex_array = None;
-      camera = Renderer.Orthographic_camera.make (-1.6) 1.6 (-0.9) 0.9
+      camera = Renderer.Orthographic_camera.make (-1.6) 1.6 (-0.9) 0.9;
+      camera_position = Vec3.zeros Base.Float32_elt;
+      camera_move_speed = 5.;
+      camera_rotation = 0.;
+      camera_rotation_speed = 180.;
     }
 
   let attach s =
@@ -146,18 +154,42 @@ void main() {
         square_vertex_array = Some square_vertex_array
       }
 
-  let update _ts app s =
+  let update ts app s =
     let glfw = Application.glfw app in
+    let* pressed_a = Events.Input.is_key_pressed glfw Events.Keys.A in
+    let* pressed_d = Events.Input.is_key_pressed glfw Events.Keys.D in
     let* pressed_w = Events.Input.is_key_pressed glfw Events.Keys.W in
-    if pressed_w then
-      Logger.printf Logger.Info "W key pressed@\n";
+    let* pressed_s = Events.Input.is_key_pressed glfw Events.Keys.S in
+    let* pressed_q = Events.Input.is_key_pressed glfw Events.Keys.Q in
+    let* pressed_e = Events.Input.is_key_pressed glfw Events.Keys.E in
+    let open Vec3.Syntax in
+    s.camera_position.^{0} <- if pressed_a then
+      s.camera_position.^{0} -. (s.camera_move_speed *. ts)
+    else if pressed_d then
+      s.camera_position.^{0} +. (s.camera_move_speed *. ts)
+    else
+      s.camera_position.^{0};
+    s.camera_position.^{1} <- if pressed_w then
+      s.camera_position.^{1} +. (s.camera_move_speed *. ts)
+    else if pressed_s then
+      s.camera_position.^{1} -. (s.camera_move_speed *. ts)
+    else
+      s.camera_position.^{1};
+    let s =
+      if pressed_q then
+        { s with camera_rotation = s.camera_rotation +. s.camera_rotation_speed *. ts}
+      else if pressed_e then
+        { s with camera_rotation = s.camera_rotation -. s.camera_rotation_speed *. ts}
+      else
+        s
+    in
     let* r = Renderer.set_clear_color 0.1 0.1 0.1 1.0 s.renderer in
     let* r = Renderer.clear r in
     let c =
       Renderer.Orthographic_camera.set_position
-        (Vec3.of_scalars Base.Float32_elt 0.5 0.4 0.)
+        (s.camera_position)
         s.camera
-      |> Renderer.Orthographic_camera.set_rotation 45.
+      |> Renderer.Orthographic_camera.set_rotation s.camera_rotation
     in
     let* r = Renderer.begin_scene c r in
     let* r = Renderer.submit (Option.get s.square_vertex_array) s.blue_shader r in

@@ -144,7 +144,7 @@ module Syntax = struct
 
   let ( ^/ ) = div_scalar
 
-  let ( .^[] ) = get
+  let ( .^{} ) = get
 
-  let ( .^[]<- ) = _set_unit
+  let ( .^{}<- ) = _set_unit
 end

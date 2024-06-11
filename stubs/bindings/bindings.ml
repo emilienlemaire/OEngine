@@ -191,7 +191,16 @@ module Constants (T : Ctypes.TYPE) = struct
 
     let ccw = constant "GL_CCW" int
 
-    (* 653 *)
+    (* 623 *)
+    let texture_2d = constant "GL_TEXTURE_2D" int
+
+    (* 650 *)
+    let byte = constant "GL_BYTE" int
+
+    let unsigned_byte = constant "GL_UNSIGNED_BYTE" int
+
+    let short = constant "GL_SHORT" int
+
     let unsigned_short = constant "GL_UNSIGNED_SHORT" int
 
     let int_ = constant "GL_INT" int
@@ -203,6 +212,9 @@ module Constants (T : Ctypes.TYPE) = struct
     (* 678 *)
     let stencil_buffer_bit = constant "GL_STENCIL_BUFFER_BIT" int
 
+    (* 694 *)
+    let rgb = constant "GL_RGB" int
+
     (* 711*)
     let vendor = constant "GL_VENDOR" int
 
@@ -210,8 +222,19 @@ module Constants (T : Ctypes.TYPE) = struct
 
     let version = constant "GL_VERSION" int
 
+    (* 731 *)
+    let nearest = constant "GL_NEAREST" int
+    let linear = constant "GL_LINEAR" int
+
+    (* 737 *)
+    let texture_mag_filter = constant "GL_TEXTURE_MAG_FILTER" int
+    let texture_min_filter = constant "GL_TEXTURE_MIN_FILTER" int
+
     (* 768 *)
     let color_buffer_bit = constant "GL_COLOR_BUFFER_BIT" int
+
+    (* 800 *)
+    let rgb8 = constant "GL_RGB8" int
 
     (* 1662 *)
     let array_buffer = constant "GL_ARRAY_BUFFER" int
@@ -796,6 +819,10 @@ module Bindings (F : Ctypes.FOREIGN) = struct
     let clear_color =
       foreign "glClearColor" (clampf @-> clampf @-> clampf @-> clampf @-> returning void)
 
+    (* 921 *)
+    let delete_textures =
+      foreign "glDeleteTextures" (sizei @-> ba_as_uint32p @-> returning void)
+
     (* 927 *)
     let draw_arrays = foreign "glDrawArrays" (int_as_uint @-> int @-> int @-> returning void)
 
@@ -882,14 +909,36 @@ module Bindings (F : Ctypes.FOREIGN) = struct
 
     let use_program = foreign "glUseProgram" (int_as_uint @-> returning void)
 
-    (* 4548 *)
-    let create_vertex_arrays =
-      foreign "glCreateVertexArrays" (int @-> ba_as_uint32p @-> returning void)
-
     (* 2016 *)
     let vertex_attrib_pointer =
       foreign "glVertexAttribPointer"
         (int_as_uint @-> int @-> int_as_uint @-> int @-> int @-> ptr void @-> returning void)
+
+    (* 4516 *)
+    let texture_sub_image_2d =
+      foreign "glTextureSubImage2D"
+        (int_as_uint @-> int @-> int @-> int @-> sizei @-> sizei @-> int_as_uint @-> int_as_uint @-> ptr void @-> returning void)
+
+    (* 4524 *)
+    let bind_texture_unit =
+      foreign "glBindTextureUnit"
+        (int_as_uint @-> int_as_uint @-> returning void)
+
+    (* 4546 *)
+    let create_textures =
+      foreign "glCreateTextures" (int @-> sizei @-> ba_as_uint32p @-> returning void)
+
+    (* 4548 *)
+    let create_vertex_arrays =
+      foreign "glCreateVertexArrays" (int @-> ba_as_uint32p @-> returning void)
+
+    (* 4600 *)
+    let texture_parameteri =
+      foreign "glTextureParameteri" (int_as_uint @-> int_as_uint @-> int @-> returning void)
+
+    (* 4603 *)
+    let texture_storage_2d =
+      foreign "glTextureStorage2D" (int_as_uint @-> sizei @-> int @-> sizei @-> sizei @-> returning void)
 
     (* 7871 *)
     let bind_vertex_array = foreign "glBindVertexArray" (int_as_uint @-> returning void)

@@ -2,4 +2,4 @@
  (name renderer_opengl)
  (public_name OEngine_lib.renderer_opengl)
  (implements renderer)
- (libraries core gl vertex_array_opengl))
+ (libraries core gl vertex_array_opengl fmt))

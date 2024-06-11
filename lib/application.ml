@@ -231,14 +231,6 @@ end = struct
   let key_callback glfw key _scancode action _mods =
     if key = Events.Keys.ESCAPE && action = Events.Actions.PRESS then
       ignore @@ Glfw.set_window_should_close true glfw
-    else if key = Events.Keys.Q && action = Events.Actions.RELEASE then (
-      Format.printf "You released the Q key@\n";
-      Format.pp_print_flush Format.std_formatter () )
-    else if key = Events.Keys.Q && action = Events.Actions.REPEAT then (
-      Format.printf "You repeated the Q key@\n";
-      Format.pp_print_flush Format.std_formatter () )
-    else
-      ()
 
   let framebuffer_size_callback _ width height = Stubs.Gl.viewport 0 0 width height
 

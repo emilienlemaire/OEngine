@@ -1,5 +1,5 @@
 (library
  (name renderer)
  (package OEngine_lib)
- (virtual_modules renderer)
- (libraries core vertex_array shader math))
+ (virtual_modules renderer texture)
+ (libraries core bimage bimage-io vertex_array shader math))

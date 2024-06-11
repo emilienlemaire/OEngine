@@ -28,9 +28,10 @@ let begin_scene c s =
        scene_data = { view_projection_matrix = Orthographic_camera.view_projection_matrix c }
      }
 
-let submit va sh s =
+let submit va sh ?(transform = Mat4x4.id Base.Float32_elt) s =
   let* _ = Shader.bind sh in
   let* _ = Shader.upload_uniform_mat4 "u_ViewProjection" s.scene_data.view_projection_matrix sh in
+  let* _ = Shader.upload_uniform_mat4 "u_Transform" transform sh in
   let* _ = Vertex_array.bind va in
   let* count = Vertex_array.index_count va in
   let+ _ = Gl.draw_elements Gl.Triangles count in

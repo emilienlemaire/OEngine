@@ -187,12 +187,12 @@ let translate : type a b. (a, b) t -> (a, b) Vec3.t -> (a, b) t =
   Genarray.blit mat res;
   let translate =
     let open Vec4.Syntax in
-    let ( .^[] ) = Vec3.Syntax.( .^[] ) in
+    let ( .^{} ) = Vec3.Syntax.( .^{} ) in
     let m0 = get_col mat 0 in
     let m1 = get_col mat 1 in
     let m2 = get_col mat 2 in
     let m3 = get_col mat 3 in
-    (vec.^[0] *^ m0) ^+^ (vec.^[1] *^ m1) ^+^ (vec.^[2] *^ m2) ^+^ m3
+    (vec.^{0} *^ m0) ^+^ (vec.^{1} *^ m1) ^+^ (vec.^{2} *^ m2) ^+^ m3
   in
   _set_vec4 res 3 translate
 

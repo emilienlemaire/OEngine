@@ -357,6 +357,7 @@ type empty_or_not =
   ]
 
 type (_, _) data_type =
+  | UnsignedByte : (int, [> non_empty ]) data_type
   | UInt16 : (int, [> non_empty ]) data_type
   | Int : (int, [> non_empty ]) data_type
   | Float : (float, [> non_empty ]) data_type
@@ -380,6 +381,11 @@ let buffer_data :
     | UInt16 ->
       let ba =
         Bigarray.Array1.of_array Bigarray.int16_unsigned Bigarray.c_layout (Array.of_list data)
+      in
+      (to_voidp @@ bigarray_start array1 ba, Bigarray.Array1.size_in_bytes ba)
+    | UnsignedByte ->
+      let ba =
+        Bigarray.Array1.of_array Bigarray.int8_unsigned Bigarray.c_layout (Array.of_list data)
       in
       (to_voidp @@ bigarray_start array1 ba, Bigarray.Array1.size_in_bytes ba)
     | Bool ->
@@ -413,6 +419,11 @@ let buffer_sub_data :
     | UInt16 ->
       let ba =
         Bigarray.Array1.of_array Bigarray.int16_unsigned Bigarray.c_layout (Array.of_list data)
+      in
+      (to_voidp @@ bigarray_start array1 ba, Bigarray.Array1.size_in_bytes ba)
+    | UnsignedByte ->
+      let ba =
+        Bigarray.Array1.of_array Bigarray.int8_unsigned Bigarray.c_layout (Array.of_list data)
       in
       (to_voidp @@ bigarray_start array1 ba, Bigarray.Array1.size_in_bytes ba)
     | Bool ->
@@ -457,6 +468,14 @@ let vertex_attrib_pointer :
           Stubs.Gl.false_ )
       stride
       (ptr_of_raw_address @@ Nativeint.of_int offset)
+  | UnsignedByte ->
+    Stubs.Gl.vertex_attrib_pointer idx size Stubs.Gl.unsigned_byte
+      ( if normalized then
+          Stubs.Gl.true_
+        else
+          Stubs.Gl.false_ )
+      stride
+      (ptr_of_raw_address @@ Nativeint.of_int offset)
   | Bool ->
     Stubs.Gl.vertex_attrib_pointer idx size Stubs.Gl.bool_
       ( if normalized then
@@ -488,6 +507,68 @@ let draw_elements kind count =
   | Triangles ->
     check_error @@ fun () ->
     Stubs.Gl.draw_elements Stubs.Gl.triangles count Stubs.Gl.unsigned_short None
+
+type texture_target = Texture_2D
+
+let create_texture typ =
+  match typ with Texture_2D -> get_int (Stubs.Gl.create_textures 1 Stubs.Gl.texture_2d)
+
+type texture_internal_format = Rgb8
+
+let texture_storage_2d id levels format width heigth =
+  check_error (fun () ->
+      match format with Rgb8 -> Stubs.Gl.texture_storage_2d id levels Stubs.Gl.rgb8 width heigth )
+
+type _ texture_param_value =
+  | Nearest : [> `Nearest ] texture_param_value
+  | Linear : [> `Linear ] texture_param_value
+
+type _ texture_param =
+  | Texture_min_filter
+      : [> `Nearest
+        | `Linear
+        | `NearestMipmapNearest
+        | `LinearMipmapNearest
+        | `NearestMipmapLinear
+        | `LinearMipmapLinear
+        ]
+        texture_param
+  | Texture_mag_filter : [> `Nearest | `Linear ] texture_param
+
+let texture_parameteri :
+  type a. int -> a texture_param -> a texture_param_value -> unit Core.Error.t =
+ fun id param value ->
+  check_error (fun () ->
+      match param with
+      | Texture_min_filter ->
+        ( match value with
+        | Nearest -> Stubs.Gl.texture_parameteri id Stubs.Gl.texture_min_filter Stubs.Gl.nearest
+        | Linear -> Stubs.Gl.texture_parameteri id Stubs.Gl.texture_min_filter Stubs.Gl.linear )
+      | Texture_mag_filter ->
+        ( match value with
+        | Nearest -> Stubs.Gl.texture_parameteri id Stubs.Gl.texture_mag_filter Stubs.Gl.nearest
+        | Linear -> Stubs.Gl.texture_parameteri id Stubs.Gl.texture_mag_filter Stubs.Gl.linear ) )
+
+type texture_type = UnsignedByte
+
+type texture_format =
+  | Rgb
+
+let texture_sub_image_2d id level xoffset yoffset width height format typ data =
+  check_error (fun () ->
+      let data = to_voidp @@ bigarray_start array1 data in
+      match typ with
+      | UnsignedByte ->
+        ( match format with
+        | Rgb ->
+          Stubs.Gl.texture_sub_image_2d id level xoffset yoffset width height Stubs.Gl.rgb
+            Stubs.Gl.unsigned_byte data ) )
+
+let bind_texture_unit slot id =
+  Stubs.Gl.bind_texture_unit slot id
+
+let delete_texture id =
+  set_int (Stubs.Gl.delete_textures 1) id
 
 let delete_buffer id = check_error @@ fun () -> set_int (Stubs.Gl.delete_buffers 1) id
 
